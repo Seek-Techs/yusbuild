@@ -11,3 +11,4 @@ pytest-django>=4.8
 pytest-cov>=5.0
 factory-boy>=3.3
 freezegun>=1.4
+drf-spectacular

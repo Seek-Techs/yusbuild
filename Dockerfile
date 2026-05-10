@@ -19,8 +19,8 @@ WORKDIR /app
 
 # Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install --default-timeout=1000 --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
 # Copy project
 COPY . .
 
@@ -34,4 +34,4 @@ RUN python manage.py collectstatic --noinput
 EXPOSE 8000
 
 # Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "config.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "config.wsgi:application"]

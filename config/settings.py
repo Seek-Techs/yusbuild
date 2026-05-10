@@ -36,6 +36,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
+    'drf_spectacular',
 ]
 
 LOCAL_APPS = [
@@ -134,6 +135,14 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ],
     "EXCEPTION_HANDLER": "apps.piles.exceptions.custom_exception_handler",
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# spetacular for api docs
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'YusBuild API',
+    'DESCRIPTION': 'Pile Reinforcement Quantification API',
+    'VERSION': '1.0.0',
 }
 
 # Logging configuration
