@@ -262,6 +262,7 @@ class PileCalculator:
             bar_size = int(section["bar_size"])
             count = int(section["count"])
             length_per_bar = float(section["length_per_bar_m"])
+            section_name = section.get("section_name", "")
 
             kg_m = get_kg_per_m(bar_size)
             total_length = length_per_bar * count
@@ -269,7 +270,7 @@ class PileCalculator:
 
             results.append(
                 MainBarSectionResult(
-                    section_name=section.get("section_name", ""),
+                    section_name=section_name,
                     bar_size_mm=bar_size,
                     count=count,
                     length_per_bar_m=length_per_bar,
@@ -279,6 +280,7 @@ class PileCalculator:
                 )
             )
             total_weight += weight
+
 
         return results, total_weight
 

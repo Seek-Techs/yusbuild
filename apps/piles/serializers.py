@@ -4,8 +4,11 @@ DRF Serializers for the Piles app.
 
 import logging
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
 from apps.piles.calculations import PileCalculator
+from django.db import transaction
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,65 @@ class PileTypeConfigurationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+    def validate_main_bar_sections(self, value):
+        """Validate main bar section JSON structure."""
+        if not isinstance(value, list) or not value:
+            raise serializers.ValidationError(
+                "main_bar_sections must be a non-empty list."
+            )
+
+        required_fields = {
+            "bar_size",
+            "length_per_bar_m",
+            "count",
+            "section_name",
+        }
+
+        valid_bar_sizes = {6, 8, 10, 12, 16, 20, 25, 28, 32, 40}
+
+        for index, section in enumerate(value):
+            if not isinstance(section, dict):
+                raise serializers.ValidationError(
+                    f"Section {index} must be an object."
+                )
+
+            missing_fields = required_fields - section.keys()
+            if missing_fields:
+                missing = ", ".join(sorted(missing_fields))
+                raise serializers.ValidationError(
+                    f"Section {index} is missing required field(s): {missing}."
+                )
+
+            try:
+                bar_size = int(section["bar_size"])
+                length_per_bar = float(section["length_per_bar_m"])
+                count = int(section["count"])
+            except (TypeError, ValueError):
+                raise serializers.ValidationError(
+                    f"Section {index} has invalid numeric values."
+                )
+
+            if bar_size not in valid_bar_sizes:
+                raise serializers.ValidationError(
+                    f"Section {index} has invalid bar_size Y{bar_size}."
+                )
+
+            if length_per_bar <= 0:
+                raise serializers.ValidationError(
+                    f"Section {index} length_per_bar_m must be greater than zero."
+                )
+
+            if count <= 0:
+                raise serializers.ValidationError(
+                    f"Section {index} count must be greater than zero."
+                )
+
+            if not str(section["section_name"]).strip():
+                raise serializers.ValidationError(
+                    f"Section {index} section_name must not be blank."
+                )
+
+        return value
 
 
 # ============================================================
@@ -163,13 +225,46 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Validate pile data."""
-        # Ensure actual_length >= design_length (or warn)
-        design_length = data.get("design_length_m")
-        actual_length = data.get("actual_length_m")
 
-        if design_length and actual_length:
+        instance = getattr(self, "instance", None)
+        pile_type = data.get("pile_type", getattr(instance, "pile_type", None))
+
+        # Validate pile type configuration exists
+        if not PileTypeConfiguration.objects.filter(
+            pile_type=pile_type,
+            is_active=True,
+        ).exists():
+            raise serializers.ValidationError({
+                "pile_type": f"No active configuration exists for {pile_type}"
+            })
+
+
+        # Validate lengths
+        design_length = data.get(
+            "design_length_m",
+            getattr(instance, "design_length_m", None),
+        )
+        actual_length = data.get(
+            "actual_length_m",
+            getattr(instance, "actual_length_m", None),
+        )
+
+
+        if design_length is not None and actual_length is not None:
+
+            # Prevent impossible values
+            if design_length <= 0:
+                raise serializers.ValidationError({
+                    "design_length_m": "Design length must be greater than zero."
+                })
+
+            if actual_length <= 0:
+                raise serializers.ValidationError({
+                    "actual_length_m": "Actual length must be greater than zero."
+                })
+
+            # Warning log only
             if actual_length < design_length:
-                # This is a warning case, not necessarily an error
                 logger.warning(
                     "Pile actual length (%.1fm) is less than design length (%.1fm)",
                     actual_length,
@@ -177,34 +272,49 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
                 )
 
         # Validate pile_no uniqueness within project
-        project = data.get("project")
-        pile_no = data.get("pile_no")
+        project = data.get("project", getattr(self.instance, "project", None))
+        pile_no = data.get("pile_no", getattr(self.instance, "pile_no", None))
+
+        if pile_no is not None:
+            pile_no = pile_no.strip()
+            data["pile_no"] = pile_no
+
         if project and pile_no:
-            instance = getattr(self, "instance", None)
-            queryset = Pile.objects.filter(project=project, pile_no=pile_no)
+            queryset = Pile.objects.filter(
+                project=project,
+                pile_no__iexact=pile_no,
+            )
+
             if instance:
                 queryset = queryset.exclude(pk=instance.pk)
+
             if queryset.exists():
-                raise serializers.ValidationError(
-                    {"pile_no": f"Pile '{pile_no}' already exists in this project."}
-                )
+                raise serializers.ValidationError({
+                    "pile_no": f"Pile '{pile_no}' already exists in this project."
+                })
 
         return data
 
+    @transaction.atomic
     def create(self, validated_data):
-        """Create pile and run calculation."""
+        """Create pile and run calculation atomically."""
         pile = Pile.objects.create(**validated_data)
         logger.info("Pile created: %s (project=%s)", pile.pile_no, pile.project.name)
 
-        # Run calculation
         self._run_calculation(pile)
 
         return pile
 
+
+    @transaction.atomic
     def update(self, instance, validated_data):
-        """Update pile and recalculate if needed."""
-        # Check if recalculation is needed
-        recalculate_fields = ["pile_type", "diameter_mm", "design_length_m", "actual_length_m"]
+        """Update pile and recalculate atomically when quantity inputs change."""
+        recalculate_fields = [
+            "pile_type",
+            "diameter_mm",
+            "design_length_m",
+            "actual_length_m",
+        ]
         needs_recalc = any(
             field in validated_data and validated_data[field] != getattr(instance, field)
             for field in recalculate_fields
@@ -220,6 +330,7 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             self._run_calculation(instance)
 
         return instance
+
 
     def _run_calculation(self, pile: Pile):
         """Run calculation engine and store results."""
@@ -262,7 +373,11 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         """Include calculation result in response."""
         data = super().to_representation(instance)
 
-        # Add full calculation breakdown
+        calculation_result = getattr(self, "_calculation_result", None)
+        if calculation_result is not None:
+            data["calculation_result"] = calculation_result
+            return data
+
         try:
             result = PileCalculator.calculate(instance)
             data["calculation_result"] = result.to_dict()
@@ -271,6 +386,7 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             data["calculation_result"] = None
 
         return data
+
 
 
 class PileListFilterSerializer(serializers.Serializer):

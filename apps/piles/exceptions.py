@@ -28,7 +28,8 @@ def custom_exception_handler(exc, context):
         # Log the error
         view = context.get("view", None)
         view_name = view.__class__.__name__ if view else "Unknown"
-        logger.error(
+        log_method = logger.warning if response.status_code < 500 else logger.error
+        log_method(
             "API error in %s: %s (status=%s)",
             view_name,
             str(exc),

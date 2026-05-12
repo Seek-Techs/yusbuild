@@ -13,6 +13,10 @@ from apps.projects.serializers import (
     ProjectDetailSerializer,
     ProjectCreateUpdateSerializer,
 )
+from apps.piles.models import PileCalculation
+from apps.piles.calculations import PileCalculator
+from django.db.models import Count, Sum
+
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +33,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
     destroy: DELETE /api/v1/projects/{id}/
     """
 
-    queryset = Project.objects.all()
+    def get_queryset(self):
+        """Return projects with aggregate BOQ totals precomputed."""
+        return Project.objects.annotate(
+            total_piles_count=Count("piles", distinct=True),
+            total_steel_kg_sum=Sum("piles__calculation__total_steel_kg"),
+            total_concrete_m3_sum=Sum("piles__calculation__actual_concrete_m3"),
+        )
+
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
@@ -87,7 +98,27 @@ class ProjectViewSet(viewsets.ModelViewSet):
             pile_details = []
 
             for pile in piles:
-                calc = pile.calculation
+                calc = getattr(pile, "calculation", None)
+                if calc is None:
+                    logger.warning(
+                        "Pile %s has no calculation record; recalculating before BOQ",
+                        pile.pile_no,
+                    )
+                    result = PileCalculator.calculate(pile)
+                    calc, _ = PileCalculation.objects.update_or_create(
+                        pile=pile,
+                        defaults={
+                            "main_bars_kg": result.main_bars_kg,
+                            "helix_kg": result.helix_kg,
+                            "stiffeners_kg": result.stiffeners_kg,
+                            "total_steel_kg": result.total_steel_kg,
+                            "design_concrete_m3": result.design_concrete_m3,
+                            "actual_concrete_m3": result.actual_concrete_m3,
+                            "calculation_version": "1.0.0",
+                        },
+                    )
+
+
                 ptype = pile.pile_type
 
                 # Aggregate by type
@@ -102,9 +133,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
                 type_summary[ptype]["count"] += 1
                 type_summary[ptype]["total_steel_kg"] += calc.total_steel_kg
-                type_summary[ptype]["total_concrete_m3"] += (
-                    calc.actual_concrete_m3
-                )
+                type_summary[ptype]["total_concrete_m3"] += calc.actual_concrete_m3
 
                 # Pile detail
                 pile_details.append(
@@ -125,6 +154,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     }
                 )
 
+
             # Calculate tons for summary
             for ts in type_summary.values():
                 ts["total_steel_tons"] = round(ts["total_steel_kg"] / 1000, 2)
@@ -132,37 +162,52 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 ts["total_concrete_m3"] = round(ts["total_concrete_m3"], 4)
 
             # Grand totals
+            total_steel_kg = sum(
+                item["steel_kg"] for item in pile_details
+            )
+            total_concrete_m3 = sum(
+                item["concrete_m3"] for item in pile_details
+            )
+
             grand_totals = {
-                "total_piles": len(piles),
-                "total_steel_kg": round(sum(p.total_steel_kg for p in piles), 2),
-                "total_steel_tons": round(
-                    sum(p.total_steel_kg for p in piles) / 1000, 2
-                ),
-                "total_concrete_m3": round(
-                    sum(p.actual_concrete_m3 for p in piles), 4
-                ),
+                "total_piles": len(pile_details),
+                "total_steel_kg": round(total_steel_kg, 2),
+                "total_steel_tons": round(total_steel_kg / 1000, 2),
+                "total_concrete_m3": round(total_concrete_m3, 4),
             }
 
+
             # Steel distribution percentages
-            total_steel = grand_totals["total_steel_kg"]
+            main_bars_kg = sum(
+                pile.calculation.main_bars_kg
+                for pile in piles
+                if getattr(pile, "calculation", None) is not None
+            )
+            helix_kg = sum(
+                pile.calculation.helix_kg
+                for pile in piles
+                if getattr(pile, "calculation", None) is not None
+            )
+            stiffeners_kg = sum(
+                pile.calculation.stiffeners_kg
+                for pile in piles
+                if getattr(pile, "calculation", None) is not None
+            )
             steel_distribution = {
                 "main_bars": {
-                    "kg": round(sum(p.main_bars_kg for p in piles), 2),
-                    "percentage": round(
-                        sum(p.main_bars_kg for p in piles) / total_steel * 100, 1
-                    ) if total_steel > 0 else 0,
+                    "kg": round(main_bars_kg, 2),
+                    "percentage": round(main_bars_kg / total_steel_kg  * 100, 1)
+                    if total_steel_kg > 0 else 0,
                 },
                 "helix": {
-                    "kg": round(sum(p.helix_kg for p in piles), 2),
-                    "percentage": round(
-                        sum(p.helix_kg for p in piles) / total_steel * 100, 1
-                    ) if total_steel > 0 else 0,
+                    "kg": round(helix_kg, 2),
+                    "percentage": round(helix_kg / total_steel_kg  * 100, 1)
+                    if total_steel_kg  > 0 else 0,
                 },
                 "stiffeners": {
-                    "kg": round(sum(p.stiffeners_kg for p in piles), 2),
-                    "percentage": round(
-                        sum(p.stiffeners_kg for p in piles) / total_steel * 100, 1
-                    ) if total_steel > 0 else 0,
+                    "kg": round(stiffeners_kg, 2),
+                    "percentage": round(stiffeners_kg / total_steel_kg  * 100, 1)
+                    if total_steel_kg > 0 else 0,
                 },
             }
 

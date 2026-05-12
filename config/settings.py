@@ -12,17 +12,24 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-change-me-in-production"
-)
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY"
+)
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-dev-only-change-me"
+    else:
+        raise RuntimeError("DJANGO_SECRET_KEY must be set when DEBUG=False.")
 
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if host.strip()
+]
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -37,6 +44,8 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
     'drf_spectacular',
+    "rest_framework_simplejwt",
+
 ]
 
 LOCAL_APPS = [
@@ -83,12 +92,30 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("POSTGRES_DB", "yusbuild"),
-        "USER": os.getenv("POSTGRES_USER", "postgres"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "USER": os.getenv("POSTGRES_USER", "postgres" if DEBUG else ""),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres" if DEBUG else ""),
         "HOST": os.getenv("POSTGRES_HOST", "localhost"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
+
+if not DEBUG:
+    if "*" in ALLOWED_HOSTS:
+        raise RuntimeError("ALLOWED_HOSTS must not contain '*' when DEBUG=False.")
+
+    db_config = DATABASES["default"]
+
+    if not db_config["USER"]:
+        raise RuntimeError("POSTGRES_USER must be set when DEBUG=False.")
+
+    if not db_config["PASSWORD"]:
+        raise RuntimeError("POSTGRES_PASSWORD must be set when DEBUG=False.")
+
+    if db_config["PASSWORD"] == "postgres":
+        raise RuntimeError(
+            "POSTGRES_PASSWORD must not use the default 'postgres' value when DEBUG=False."
+        )
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -114,6 +141,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
@@ -121,8 +151,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,

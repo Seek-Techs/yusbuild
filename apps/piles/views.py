@@ -85,20 +85,27 @@ class PileViewSet(viewsets.ModelViewSet):
             result = PileCalculator.calculate(pile)
 
             # Update calculation record
-            PileCalculation.objects.update_or_create(
-                pile=pile,
-                defaults={
-                    "main_bars_kg": result.main_bars_kg,
-                    "helix_kg": result.helix_kg,
-                    "stiffeners_kg": result.stiffeners_kg,
-                    "total_steel_kg": result.total_steel_kg,
-                    "design_concrete_m3": result.design_concrete_m3,
-                    "actual_concrete_m3": result.actual_concrete_m3,
-                    "calculation_version": "1.0.0",
-                },
-            )
+            calculation, _ = PileCalculation.objects.update_or_create(
+            pile=pile,
+            defaults={
+                "main_bars_kg": result.main_bars_kg,
+                "helix_kg": result.helix_kg,
+                "stiffeners_kg": result.stiffeners_kg,
+                "total_steel_kg": result.total_steel_kg,
+                "design_concrete_m3": result.design_concrete_m3,
+                "actual_concrete_m3": result.actual_concrete_m3,
+                "calculation_version": "1.0.0",
+            },
+        )
 
-            logger.info("Force recalculation completed for pile %s", pile.pile_no)
+            pile.calculation = calculation
+
+            logger.info(
+                "Force recalculation completed for pile %s: steel=%.2f kg, concrete=%.4f m3",
+                pile.pile_no,
+                calculation.total_steel_kg,
+                calculation.actual_concrete_m3,
+        )
 
             return Response(
                 {

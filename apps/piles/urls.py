@@ -7,8 +7,8 @@ from rest_framework.routers import DefaultRouter
 from apps.piles.views import PileViewSet, PileTypeConfigurationViewSet
 
 router = DefaultRouter()
-router.register(r"", PileViewSet, basename="pile")
 router.register(r"configs", PileTypeConfigurationViewSet, basename="pile-config")
+router.register(r"", PileViewSet, basename="pile")
 
 urlpatterns = [
     path("", include(router.urls)),

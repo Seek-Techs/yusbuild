@@ -13,7 +13,8 @@ from apps.piles.calculations import (
     PileCalculator,
     BS8666_BAR_SIZES,
 )
-from apps.piles.models import PileTypeConfiguration
+from apps.piles.models import Pile, PileTypeConfiguration
+
 
 
 class TestKgPerM:

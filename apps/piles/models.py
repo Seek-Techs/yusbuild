@@ -194,7 +194,13 @@ class Pile(models.Model):
         ordering = ["pile_no"]
         verbose_name = "Pile"
         verbose_name_plural = "Piles"
-        unique_together = [["project", "pile_no"]]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "pile_no"],
+                name="unique_project_pile",
+            )
+        ]
+
 
     def __str__(self) -> str:
         return f"{self.pile_no} ({self.pile_type})"

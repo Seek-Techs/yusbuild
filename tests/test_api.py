@@ -3,8 +3,9 @@ API endpoint tests for YusBuild.
 Tests all CRUD operations and custom actions.
 """
 
+import json
 import pytest
-from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 from apps.projects.models import Project
@@ -12,9 +13,16 @@ from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
 
 
 @pytest.fixture
-def api_client():
-    """Create API test client."""
-    return APIClient()
+def api_client(db):
+    """Create authenticated API test client."""
+    user = get_user_model().objects.create_user(
+        username="test-user",
+        password="test-password",
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
 
 
 class TestHealthEndpoint:
@@ -24,8 +32,9 @@ class TestHealthEndpoint:
         """Health endpoint should return 200 with status ok."""
         response = api_client.get("/health/")
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["status"] == "ok"
-        assert response.data["service"] == "yusbuild-api"
+        data = json.loads(response.content)
+        assert data["status"] == "ok"
+        assert data["service"] == "yusbuild-api"
 
 
 class TestProjectEndpoints:

@@ -10,6 +10,10 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 
 def health_check(request):
@@ -35,4 +39,11 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name='schema'),
         name='redoc',
     ),
+    path(
+        "api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"
+        ),
+    path(
+        "api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"
+        ),
+
 ]
