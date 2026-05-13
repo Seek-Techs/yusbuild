@@ -44,7 +44,8 @@ class PileTypeConfiguration(models.Model):
     )
 
     # -- Main Bar Configuration (JSON for flexibility) --
-    # Format: [{"bar_size": 16, "length_per_bar_m": 15.78, "count": 10, "section_name": "full_cage"}, ...]
+    # Format: [{"bar_size": 16, "length_per_bar_m": 15.78,
+    #  "count": 10, "section_name": "full_cage"}, ...]
     main_bar_sections = models.JSONField(
         default=list,
         help_text="List of main bar sections with size, length, count",

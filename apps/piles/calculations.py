@@ -407,14 +407,14 @@ class PileCalculator:
                 pile_type=pile.pile_type,
                 is_active=True,
             )
-        except PileTypeConfiguration.DoesNotExist:
+        except PileTypeConfiguration.DoesNotExist as err:
             logger.error(
                 "No active configuration found for pile type: %s",
                 pile.pile_type,
             )
             raise ValueError(
                 f"No active PileTypeConfiguration found for {pile.pile_type}"
-            )
+            ) from err
 
         # 1. Concrete
         concrete = cls.calculate_concrete(

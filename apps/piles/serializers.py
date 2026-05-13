@@ -80,14 +80,14 @@ class PileTypeConfigurationSerializer(serializers.ModelSerializer):
                 bar_size = int(section["bar_size"])
                 length_per_bar = float(section["length_per_bar_m"])
                 count = int(section["count"])
-            except (TypeError, ValueError):
+            except (TypeError, ValueError) as err:
                 raise serializers.ValidationError(
                     f"Section {index} has invalid numeric values."
-                )
+                ) from err
 
             if bar_size not in valid_bar_sizes:
                 raise serializers.ValidationError(
-                    f"Section {index} has invalid bar_size Y{bar_size}."
+                    f"Section {index} has invalid bar_size {bar_size}."
                 )
 
             if length_per_bar <= 0:
@@ -426,7 +426,7 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
 
         except ValueError as exc:
             logger.error("Calculation failed for pile %s: %s", pile.pile_no, str(exc))
-            raise serializers.ValidationError({"calculation": str(exc)})
+            raise serializers.ValidationError({"calculation": str(exc)}) from exc
         except Exception as exc:
             logger.critical(
                 "Unexpected calculation error for pile %s: %s",
@@ -436,7 +436,7 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             )
             raise serializers.ValidationError(
                 {"calculation": "An unexpected error occurred during calculation."}
-            )
+            ) from exc
 
     def to_representation(self, instance):
         """Include calculation result in response."""

@@ -102,7 +102,8 @@ class PileViewSet(viewsets.ModelViewSet):
             )
 
             logger.info(
-                "Force recalculation completed for pile %s: steel=%.2f kg, concrete=%.4f m3, history_id=%s",
+                "Force recalculation completed for pile %s: steel=%.2f kg,"
+                "concrete=%.4f m3, history_id=%s",
                 pile.pile_no,
                 calculation.total_steel_kg,
                 calculation.actual_concrete_m3,

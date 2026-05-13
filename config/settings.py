@@ -112,14 +112,16 @@ if not DEBUG:
 
     if db_config["PASSWORD"] == "postgres":
         raise RuntimeError(
-            "POSTGRES_PASSWORD must not use the default 'postgres' value when DEBUG=False."
+            "POSTGRES_PASSWORD must" 
+            "not use the default 'postgres' value when DEBUG=False."
         )
 
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation." 
+        "UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
