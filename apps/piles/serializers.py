@@ -3,19 +3,19 @@ DRF Serializers for the Piles app.
 """
 
 import logging
+
+from django.db import transaction
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
+
+from apps.piles.calculations import PileCalculator
 from apps.piles.models import (
     Pile,
-    PileTypeConfiguration,
     PileCalculation,
     PileCalculationHistory,
+    PileTypeConfiguration,
 )
-from apps.projects.models import ProjectMembership
-from apps.piles.calculations import PileCalculator
 from apps.piles.services import calculate_and_persist_pile
-from django.db import transaction
-
+from apps.projects.models import ProjectMembership
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # PileTypeConfiguration Serializers
 # ============================================================
+
 
 class PileTypeConfigurationSerializer(serializers.ModelSerializer):
     """Serializer for pile type configuration."""
@@ -47,6 +48,7 @@ class PileTypeConfigurationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
     def validate_main_bar_sections(self, value):
         """Validate main bar section JSON structure."""
         if not isinstance(value, list) or not value:
@@ -65,9 +67,7 @@ class PileTypeConfigurationSerializer(serializers.ModelSerializer):
 
         for index, section in enumerate(value):
             if not isinstance(section, dict):
-                raise serializers.ValidationError(
-                    f"Section {index} must be an object."
-                )
+                raise serializers.ValidationError(f"Section {index} must be an object.")
 
             missing_fields = required_fields - section.keys()
             if missing_fields:
@@ -111,6 +111,7 @@ class PileTypeConfigurationSerializer(serializers.ModelSerializer):
 # ============================================================
 # PileCalculation Serializers
 # ============================================================
+
 
 class PileCalculationSerializer(serializers.ModelSerializer):
     """Serializer for calculated pile results."""
@@ -167,10 +168,13 @@ class PileCalculationHistorySerializer(serializers.ModelSerializer):
 # Pile Serializers
 # ============================================================
 
+
 class PileSummarySerializer(serializers.ModelSerializer):
     """Lightweight pile serializer for list views."""
 
-    steel_kg = serializers.FloatField(source="calculation.total_steel_kg", read_only=True)
+    steel_kg = serializers.FloatField(
+        source="calculation.total_steel_kg", read_only=True
+    )
     steel_tons = serializers.SerializerMethodField()
     concrete_m3 = serializers.FloatField(
         source="calculation.actual_concrete_m3", read_only=True
@@ -230,7 +234,7 @@ class PileDetailSerializer(serializers.ModelSerializer):
 class PileCreateUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating/updating piles with auto-calculation.
-    
+
     On create: automatically runs calculation engine and stores results.
     On update: recalculates if pile_type, diameter, or lengths change.
     """
@@ -268,10 +272,9 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             pile_type=pile_type,
             is_active=True,
         ).exists():
-            raise serializers.ValidationError({
-                "pile_type": f"No active configuration exists for {pile_type}"
-            })
-
+            raise serializers.ValidationError(
+                {"pile_type": f"No active configuration exists for {pile_type}"}
+            )
 
         # Validate lengths
         design_length = data.get(
@@ -283,19 +286,17 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             getattr(instance, "actual_length_m", None),
         )
 
-
         if design_length is not None and actual_length is not None:
-
             # Prevent impossible values
             if design_length <= 0:
-                raise serializers.ValidationError({
-                    "design_length_m": "Design length must be greater than zero."
-                })
+                raise serializers.ValidationError(
+                    {"design_length_m": "Design length must be greater than zero."}
+                )
 
             if actual_length <= 0:
-                raise serializers.ValidationError({
-                    "actual_length_m": "Actual length must be greater than zero."
-                })
+                raise serializers.ValidationError(
+                    {"actual_length_m": "Actual length must be greater than zero."}
+                )
 
             # Warning log only
             if actual_length < design_length:
@@ -326,9 +327,9 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
                 ).exists()
             )
             if not can_write_project:
-                raise serializers.ValidationError({
-                    "project": "You do not have write access to this project."
-                })
+                raise serializers.ValidationError(
+                    {"project": "You do not have write access to this project."}
+                )
 
         if pile_no is not None:
             pile_no = pile_no.strip()
@@ -344,9 +345,9 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
                 queryset = queryset.exclude(pk=instance.pk)
 
             if queryset.exists():
-                raise serializers.ValidationError({
-                    "pile_no": f"Pile '{pile_no}' already exists in this project."
-                })
+                raise serializers.ValidationError(
+                    {"pile_no": f"Pile '{pile_no}' already exists in this project."}
+                )
 
         return data
 
@@ -366,7 +367,6 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
 
         return pile
 
-
     @transaction.atomic
     def update(self, instance, validated_data):
         """Update pile and recalculate atomically when quantity inputs change."""
@@ -377,7 +377,8 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             "actual_length_m",
         ]
         needs_recalc = any(
-            field in validated_data and validated_data[field] != getattr(instance, field)
+            field in validated_data
+            and validated_data[field] != getattr(instance, field)
             for field in recalculate_fields
         )
 
@@ -397,7 +398,6 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             )
 
         return instance
-
 
     def _run_calculation(
         self,
@@ -455,7 +455,6 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             data["calculation_result"] = None
 
         return data
-
 
 
 class PileListFilterSerializer(serializers.Serializer):

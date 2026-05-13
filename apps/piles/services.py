@@ -12,7 +12,6 @@ from apps.piles.models import (
     PileTypeConfiguration,
 )
 
-
 CALCULATION_VERSION = "1.0.0"
 
 

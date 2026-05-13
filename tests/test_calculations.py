@@ -4,17 +4,17 @@ Tests for the Pile Calculation Engine.
 All tests verified against TECON Construction Excel data.
 """
 
-import pytest
 import math
-from django.conf import settings
+
+import pytest
+
 from apps.piles.calculations import (
+    BS8666_BAR_SIZES,
+    PileCalculator,
     get_kg_per_m,
     get_pi,
-    PileCalculator,
-    BS8666_BAR_SIZES,
 )
-from apps.piles.models import Pile, PileTypeConfiguration
-
+from apps.piles.models import Pile
 
 
 class TestKgPerM:
@@ -70,7 +70,7 @@ class TestConcreteCalculation:
             design_length_m=20.0,
             actual_length_m=21.2,
         )
-        expected = 3.142 * (0.25 ** 2) * 21.2
+        expected = 3.142 * (0.25**2) * 21.2
         assert abs(result.actual_volume_m3 - expected) < 0.0001
         assert abs(result.actual_volume_m3 - 4.16315) < 0.001
 
@@ -84,7 +84,7 @@ class TestConcreteCalculation:
             design_length_m=20.0,
             actual_length_m=21.1,
         )
-        expected = 3.142 * (0.25 ** 2) * 21.1
+        expected = 3.142 * (0.25**2) * 21.1
         assert abs(result.actual_volume_m3 - expected) < 0.0001
         assert abs(result.actual_volume_m3 - 4.143512) < 0.001
 
@@ -98,7 +98,7 @@ class TestConcreteCalculation:
             design_length_m=20.0,
             actual_length_m=21.3,
         )
-        expected = 3.142 * (0.25 ** 2) * 21.3
+        expected = 3.142 * (0.25**2) * 21.3
         assert abs(result.actual_volume_m3 - expected) < 0.0001
 
     def test_design_vs_actual_volume(self):
@@ -123,8 +123,18 @@ class TestMainBarsCalculation:
         - Total: 585.831 kg
         """
         sections = [
-            {"bar_size": 16, "length_per_bar_m": 15.78, "count": 10, "section_name": "full_cage"},
-            {"bar_size": 25, "length_per_bar_m": 8.74, "count": 10, "section_name": "short_piece"},
+            {
+                "bar_size": 16,
+                "length_per_bar_m": 15.78,
+                "count": 10,
+                "section_name": "full_cage",
+            },
+            {
+                "bar_size": 25,
+                "length_per_bar_m": 8.74,
+                "count": 10,
+                "section_name": "short_piece",
+            },
         ]
         results, total = PileCalculator.calculate_main_bars(sections)
 
@@ -136,7 +146,12 @@ class TestMainBarsCalculation:
     def test_single_section(self):
         """Single section calculation."""
         sections = [
-            {"bar_size": 16, "length_per_bar_m": 20.0, "count": 8, "section_name": "full"},
+            {
+                "bar_size": 16,
+                "length_per_bar_m": 20.0,
+                "count": 8,
+                "section_name": "full",
+            },
         ]
         results, total = PileCalculator.calculate_main_bars(sections)
 

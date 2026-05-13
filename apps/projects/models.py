@@ -4,15 +4,17 @@ A Project contains multiple piles and aggregates BOQ data.
 """
 
 import logging
+
 from django.conf import settings
-from django.db import models
 from django.core.validators import MinLengthValidator
+from django.db import models
 
 logger = logging.getLogger(__name__)
 
 
 class ProjectStatus(models.TextChoices):
     """Project lifecycle statuses."""
+
     ACTIVE = "ACTIVE", "Active"
     ON_HOLD = "ON_HOLD", "On Hold"
     COMPLETED = "COMPLETED", "Completed"
@@ -22,7 +24,7 @@ class ProjectStatus(models.TextChoices):
 class Project(models.Model):
     """
     A construction project containing piles.
-    
+
     Example: 'Lekki Phase 1', 'Bridge Project', 'Warehouse Project'
     """
 
@@ -77,6 +79,7 @@ class Project(models.Model):
     def total_steel_kg(self) -> float:
         """Return total steel weight across all piles (kg)."""
         from django.db.models import Sum
+
         result = self.piles.aggregate(total=Sum("calculation__total_steel_kg"))
         return result["total"] or 0.0
 
@@ -84,9 +87,8 @@ class Project(models.Model):
     def total_concrete_m3(self) -> float:
         """Return total concrete volume across all piles (m3)."""
         from django.db.models import Sum
-        result = self.piles.aggregate(
-            total=Sum("calculation__actual_concrete_m3")
-        )
+
+        result = self.piles.aggregate(total=Sum("calculation__actual_concrete_m3"))
         return result["total"] or 0.0
 
 

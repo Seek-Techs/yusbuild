@@ -51,13 +51,19 @@ class IsAdminEngineerOrReadOnly(BasePermission):
         project = getattr(obj, "project", obj)
         memberships = getattr(project, "memberships", None)
         if memberships is None:
-            return request.method in SAFE_METHODS and bool(user_groups & self.read_groups)
+            return request.method in SAFE_METHODS and bool(
+                user_groups & self.read_groups
+            )
 
         membership = memberships.filter(user=user).first()
         if membership is None:
             return False
 
         if request.method in SAFE_METHODS:
-            return membership.role in self.read_groups and bool(user_groups & self.read_groups)
+            return membership.role in self.read_groups and bool(
+                user_groups & self.read_groups
+            )
 
-        return membership.role in self.write_groups and bool(user_groups & self.write_groups)
+        return membership.role in self.write_groups and bool(
+            user_groups & self.write_groups
+        )

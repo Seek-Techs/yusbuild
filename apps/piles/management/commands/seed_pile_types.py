@@ -8,7 +8,9 @@ reverse-engineered from TECON Construction Excel sheets.
 """
 
 import logging
+
 from django.core.management.base import BaseCommand
+
 from apps.piles.models import PileTypeConfiguration
 
 logger = logging.getLogger(__name__)
@@ -28,7 +30,12 @@ class Command(BaseCommand):
                     "Reinforcement configuration varies by project requirements."
                 ),
                 "main_bar_sections": [
-                    {"bar_size": 16, "length_per_bar_m": 12.0, "count": 6, "section_name": "full_length"},
+                    {
+                        "bar_size": 16,
+                        "length_per_bar_m": 12.0,
+                        "count": 6,
+                        "section_name": "full_length",
+                    },
                 ],
                 "lap_length_m": 0.0,
                 "helix_bar_size_mm": 8,
@@ -114,14 +121,10 @@ class Command(BaseCommand):
             )
             if created:
                 created_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(f"  Created {config.pile_type}")
-                )
+                self.stdout.write(self.style.SUCCESS(f"  Created {config.pile_type}"))
             else:
                 updated_count += 1
-                self.stdout.write(
-                    self.style.NOTICE(f"  Updated {config.pile_type}")
-                )
+                self.stdout.write(self.style.NOTICE(f"  Updated {config.pile_type}"))
 
         self.stdout.write(
             self.style.SUCCESS(

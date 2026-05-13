@@ -4,19 +4,19 @@ Tests all CRUD operations and custom actions.
 """
 
 import json
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APIClient
-from apps.projects.models import Project, ProjectMembership
+
 from apps.piles.models import (
     Pile,
-    PileTypeConfiguration,
-    PileCalculation,
     PileCalculationHistory,
 )
+from apps.projects.models import Project, ProjectMembership
 
-from django.contrib.auth.models import Group
 
 @pytest.fixture
 def authenticated_user(db):
@@ -217,9 +217,7 @@ class TestPileCustomActions:
 
     def test_breakdown(self, api_client, pile_type_ii):
         """GET /api/v1/piles/{id}/breakdown/ should return full breakdown."""
-        response = api_client.get(
-            f"/api/v1/piles/{pile_type_ii.id}/breakdown/"
-        )
+        response = api_client.get(f"/api/v1/piles/{pile_type_ii.id}/breakdown/")
         assert response.status_code == status.HTTP_200_OK
         assert "steel" in response.data
         assert "concrete" in response.data
@@ -381,6 +379,7 @@ class TestAuthorization:
     def test_invalid_bar_size(self):
         """Invalid bar size should raise ValueError."""
         from apps.piles.calculations import get_kg_per_m
+
         with pytest.raises(ValueError):
             get_kg_per_m(15)
 

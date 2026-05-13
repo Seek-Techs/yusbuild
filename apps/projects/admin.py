@@ -3,6 +3,7 @@ Django Admin configuration for Projects app.
 """
 
 from django.contrib import admin
+
 from apps.projects.models import Project, ProjectMembership
 
 

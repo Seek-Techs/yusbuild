@@ -3,20 +3,20 @@ DRF Views for the Projects app.
 """
 
 import logging
-from rest_framework import viewsets, status
+
+from django.db.models import Count, Sum
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from apps.projects.models import Project, ProjectMembership
-from apps.projects.serializers import (
-    ProjectListSerializer,
-    ProjectDetailSerializer,
-    ProjectCreateUpdateSerializer,
-)
+
 from apps.piles.models import PileCalculationHistory
 from apps.piles.services import calculate_and_persist_pile
-from django.db.models import Count, Sum
-
+from apps.projects.models import Project, ProjectMembership
+from apps.projects.serializers import (
+    ProjectCreateUpdateSerializer,
+    ProjectDetailSerializer,
+    ProjectListSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ProjectViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Project CRUD operations.
-    
+
     list: GET /api/v1/projects/
     create: POST /api/v1/projects/
     retrieve: GET /api/v1/projects/{id}/
@@ -50,8 +50,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related("piles__calculation")
 
         return queryset
-
-
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
@@ -87,9 +85,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def boq(self, request, pk=None):
         """
         Generate Bill of Quantities for a project.
-        
+
         GET /api/v1/projects/{id}/boq/
-        
+
         Returns:
             - Summary by pile type (count, steel kg, concrete m3)
             - Per-pile detail
@@ -133,7 +131,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         reason="Missing calculation repaired during BOQ generation",
                     )
 
-
                 ptype = pile.pile_type
 
                 # Aggregate by type
@@ -169,7 +166,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     }
                 )
 
-
             # Calculate tons for summary
             for ts in type_summary.values():
                 ts["total_steel_tons"] = round(ts["total_steel_kg"] / 1000, 2)
@@ -177,12 +173,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 ts["total_concrete_m3"] = round(ts["total_concrete_m3"], 4)
 
             # Grand totals
-            total_steel_kg = sum(
-                item["steel_kg"] for item in pile_details
-            )
-            total_concrete_m3 = sum(
-                item["concrete_m3"] for item in pile_details
-            )
+            total_steel_kg = sum(item["steel_kg"] for item in pile_details)
+            total_concrete_m3 = sum(item["concrete_m3"] for item in pile_details)
 
             grand_totals = {
                 "total_piles": len(pile_details),
@@ -190,7 +182,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 "total_steel_tons": round(total_steel_kg / 1000, 2),
                 "total_concrete_m3": round(total_concrete_m3, 4),
             }
-
 
             # Steel distribution percentages
             main_bars_kg = sum(
@@ -211,18 +202,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
             steel_distribution = {
                 "main_bars": {
                     "kg": round(main_bars_kg, 2),
-                    "percentage": round(main_bars_kg / total_steel_kg  * 100, 1)
-                    if total_steel_kg > 0 else 0,
+                    "percentage": round(main_bars_kg / total_steel_kg * 100, 1)
+                    if total_steel_kg > 0
+                    else 0,
                 },
                 "helix": {
                     "kg": round(helix_kg, 2),
-                    "percentage": round(helix_kg / total_steel_kg  * 100, 1)
-                    if total_steel_kg  > 0 else 0,
+                    "percentage": round(helix_kg / total_steel_kg * 100, 1)
+                    if total_steel_kg > 0
+                    else 0,
                 },
                 "stiffeners": {
                     "kg": round(stiffeners_kg, 2),
-                    "percentage": round(stiffeners_kg / total_steel_kg  * 100, 1)
-                    if total_steel_kg > 0 else 0,
+                    "percentage": round(stiffeners_kg / total_steel_kg * 100, 1)
+                    if total_steel_kg > 0
+                    else 0,
                 },
             }
 

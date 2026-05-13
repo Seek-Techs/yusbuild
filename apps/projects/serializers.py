@@ -3,7 +3,9 @@ DRF Serializers for the Projects app.
 """
 
 import logging
+
 from rest_framework import serializers
+
 from apps.projects.models import Project
 
 logger = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
     def get_total_steel_tons(self, obj: Project) -> float:
         """Convert kg to metric tons."""
         return round(obj.total_steel_kg / 1000, 2)
-    
+
     def get_total_piles(self, obj: Project) -> int:
         """Return annotated pile count when available."""
         return getattr(obj, "total_piles_count", obj.total_piles)
@@ -48,7 +50,6 @@ class ProjectListSerializer(serializers.ModelSerializer):
     def get_total_concrete_m3(self, obj: Project) -> float:
         """Return annotated concrete total when available."""
         return getattr(obj, "total_concrete_m3_sum", None) or obj.total_concrete_m3
-
 
 
 class ProjectDetailSerializer(ProjectListSerializer):

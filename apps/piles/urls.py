@@ -2,9 +2,10 @@
 URL routing for the Piles app.
 """
 
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from apps.piles.views import PileViewSet, PileTypeConfigurationViewSet
+
+from apps.piles.views import PileTypeConfigurationViewSet, PileViewSet
 
 router = DefaultRouter()
 router.register(r"configs", PileTypeConfigurationViewSet, basename="pile-config")

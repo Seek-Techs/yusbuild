@@ -1,11 +1,11 @@
 [tool.ruff]
-line-length = 100
-exclude = ["migrations"]
+line-length = 88
+target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B"]
-ignore = []
+select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.format]
 quote-style = "double"
-indent-width = 4
+indent-style = "space"
+line-ending = "auto"

@@ -3,9 +3,10 @@ Custom exception handling for the Piles API.
 """
 
 import logging
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
+
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 def custom_exception_handler(exc, context):
     """
     Custom exception handler that returns structured error responses.
-    
+
     Ensures all errors follow a consistent format:
     {
         "error": "error_type",

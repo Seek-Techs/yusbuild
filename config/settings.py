@@ -4,6 +4,7 @@ YusBuild Django Settings - Production-ready configuration for BuildTech Solution
 
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -16,9 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY"
-)
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = "django-insecure-dev-only-change-me"
@@ -43,9 +42,8 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
-    'drf_spectacular',
+    "drf_spectacular",
     "rest_framework_simplejwt",
-
 ]
 
 LOCAL_APPS = [
@@ -156,8 +154,8 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-    "apps.common.permissions.IsAdminEngineerOrReadOnly",
-],
+        "apps.common.permissions.IsAdminEngineerOrReadOnly",
+    ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
     "DEFAULT_FILTER_BACKENDS": [
@@ -169,14 +167,14 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
     ],
     "EXCEPTION_HANDLER": "apps.piles.exceptions.custom_exception_handler",
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # spetacular for api docs
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'YusBuild API',
-    'DESCRIPTION': 'Pile Reinforcement Quantification API',
-    'VERSION': '1.0.0',
+    "TITLE": "YusBuild API",
+    "DESCRIPTION": "Pile Reinforcement Quantification API",
+    "VERSION": "1.0.0",
 }
 
 # Logging configuration

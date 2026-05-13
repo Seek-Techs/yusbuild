@@ -4,9 +4,11 @@ Core domain: Pile, PileTypeConfiguration, PileCalculation.
 """
 
 import logging
+
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+
 from apps.projects.models import Project
 
 logger = logging.getLogger(__name__)
@@ -205,7 +207,6 @@ class Pile(models.Model):
                 name="unique_project_pile",
             )
         ]
-
 
     def __str__(self) -> str:
         return f"{self.pile_no} ({self.pile_type})"

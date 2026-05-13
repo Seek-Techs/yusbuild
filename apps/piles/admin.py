@@ -3,11 +3,12 @@ Django Admin configuration for Piles app.
 """
 
 from django.contrib import admin
+
 from apps.piles.models import (
     Pile,
-    PileTypeConfiguration,
     PileCalculation,
     PileCalculationHistory,
+    PileTypeConfiguration,
 )
 
 

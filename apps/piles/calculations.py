@@ -14,7 +14,8 @@ All formulas verified against Excel output data.
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import Any
+
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -63,14 +64,13 @@ def get_kg_per_m(bar_diameter_mm: int, factor: float = None) -> float:
     """
     if bar_diameter_mm not in BS8666_BAR_SIZES:
         raise ValueError(
-            f"Invalid bar size Y{bar_diameter_mm}. "
-            f"Must be one of: {BS8666_BAR_SIZES}"
+            f"Invalid bar size Y{bar_diameter_mm}. Must be one of: {BS8666_BAR_SIZES}"
         )
 
     if factor is None:
         factor = getattr(settings, "YUSBUILD_KG_PER_M_FACTOR", 162.2)
 
-    return (bar_diameter_mm ** 2) / factor
+    return (bar_diameter_mm**2) / factor
 
 
 def get_pi() -> float:
@@ -82,9 +82,11 @@ def get_pi() -> float:
 # CALCULATION RESULT DATA CLASSES
 # ============================================================
 
+
 @dataclass
 class MainBarSectionResult:
     """Result for one main bar section."""
+
     section_name: str
     bar_size_mm: int
     count: int
@@ -97,6 +99,7 @@ class MainBarSectionResult:
 @dataclass
 class HelixResult:
     """Result for helix/spiral calculation."""
+
     bar_size_mm: int
     pitch_mm: int
     cage_diameter_mm: int
@@ -110,6 +113,7 @@ class HelixResult:
 @dataclass
 class StiffenerResult:
     """Result for stiffener ring calculation."""
+
     bar_size_mm: int
     ring_diameter_mm: float
     ring_length_m: float
@@ -122,6 +126,7 @@ class StiffenerResult:
 @dataclass
 class ConcreteResult:
     """Result for concrete volume calculation."""
+
     pile_diameter_mm: int
     design_length_m: float
     actual_length_m: float
@@ -132,6 +137,7 @@ class ConcreteResult:
 @dataclass
 class PileCalculationResult:
     """Complete calculation result for a pile."""
+
     pile_no: str
     pile_type: str
     diameter_mm: int
@@ -139,7 +145,7 @@ class PileCalculationResult:
     actual_length_m: float
 
     # Steel
-    main_bar_sections: List[MainBarSectionResult] = field(default_factory=list)
+    main_bar_sections: list[MainBarSectionResult] = field(default_factory=list)
     main_bars_kg: float = 0.0
     helix: HelixResult = None
     helix_kg: float = 0.0
@@ -152,7 +158,7 @@ class PileCalculationResult:
     design_concrete_m3: float = 0.0
     actual_concrete_m3: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to API-friendly dictionary."""
         return {
             "pile_no": self.pile_no,
@@ -179,14 +185,22 @@ class PileCalculationResult:
                     "bar_size": f"Y{self.helix.bar_size_mm}" if self.helix else None,
                     "pitch_mm": self.helix.pitch_mm if self.helix else None,
                     "n_turns": self.helix.n_turns if self.helix else None,
-                    "total_length_m": round(self.helix.total_length_m, 3) if self.helix else None,
+                    "total_length_m": round(self.helix.total_length_m, 3)
+                    if self.helix
+                    else None,
                     "weight_kg": round(self.helix_kg, 3),
                 },
                 "stiffeners": {
-                    "bar_size": f"Y{self.stiffener.bar_size_mm}" if self.stiffener else None,
+                    "bar_size": f"Y{self.stiffener.bar_size_mm}"
+                    if self.stiffener
+                    else None,
                     "n_rings": self.stiffener.n_rings if self.stiffener else None,
-                    "ring_diameter_mm": round(self.stiffener.ring_diameter_mm, 1) if self.stiffener else None,
-                    "total_length_m": round(self.stiffener.total_length_m, 3) if self.stiffener else None,
+                    "ring_diameter_mm": round(self.stiffener.ring_diameter_mm, 1)
+                    if self.stiffener
+                    else None,
+                    "total_length_m": round(self.stiffener.total_length_m, 3)
+                    if self.stiffener
+                    else None,
                     "weight_kg": round(self.stiffeners_kg, 3),
                 },
                 "total_kg": round(self.total_steel_kg, 3),
@@ -202,6 +216,7 @@ class PileCalculationResult:
 # ============================================================
 # CALCULATION ENGINE
 # ============================================================
+
 
 class PileCalculator:
     """
@@ -230,8 +245,8 @@ class PileCalculator:
         pi = get_pi()
         radius_m = pile_diameter_mm / 2 / 1000
 
-        design_volume = pi * (radius_m ** 2) * design_length_m
-        actual_volume = pi * (radius_m ** 2) * actual_length_m
+        design_volume = pi * (radius_m**2) * design_length_m
+        actual_volume = pi * (radius_m**2) * actual_length_m
 
         return ConcreteResult(
             pile_diameter_mm=pile_diameter_mm,
@@ -243,8 +258,8 @@ class PileCalculator:
 
     @staticmethod
     def calculate_main_bars(
-        main_bar_sections: List[Dict[str, Any]],
-    ) -> tuple[List[MainBarSectionResult], float]:
+        main_bar_sections: list[dict[str, Any]],
+    ) -> tuple[list[MainBarSectionResult], float]:
         """
         Calculate main bar weight.
 
@@ -280,7 +295,6 @@ class PileCalculator:
                 )
             )
             total_weight += weight
-
 
         return results, total_weight
 
@@ -387,6 +401,7 @@ class PileCalculator:
 
         # Get or create type configuration
         from apps.piles.models import PileTypeConfiguration
+
         try:
             type_config = PileTypeConfiguration.objects.get(
                 pile_type=pile.pile_type,

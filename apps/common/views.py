@@ -9,9 +9,7 @@ from django.http import JsonResponse
 
 def health_check(request):
     """Lightweight liveness check for load balancers."""
-    return JsonResponse(
-        {"status": "ok", "service": "yusbuild-api", "version": "1.0.0"}
-    )
+    return JsonResponse({"status": "ok", "service": "yusbuild-api", "version": "1.0.0"})
 
 
 def readiness_check(request):

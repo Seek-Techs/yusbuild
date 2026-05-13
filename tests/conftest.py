@@ -3,9 +3,9 @@ Pytest fixtures for YusBuild tests.
 """
 
 import pytest
-from django.test import TestCase
+
+from apps.piles.models import Pile, PileTypeConfiguration
 from apps.projects.models import Project
-from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
 
 
 # Enable Django database for all tests
@@ -29,8 +29,18 @@ def type_ii_config(db):
         pile_type="TYPE_II",
         description="Type II - Full reinforcement with lapped bars",
         main_bar_sections=[
-            {"bar_size": 16, "length_per_bar_m": 15.78, "count": 10, "section_name": "full_cage_y16"},
-            {"bar_size": 25, "length_per_bar_m": 8.74, "count": 10, "section_name": "short_piece_y25"},
+            {
+                "bar_size": 16,
+                "length_per_bar_m": 15.78,
+                "count": 10,
+                "section_name": "full_cage_y16",
+            },
+            {
+                "bar_size": 25,
+                "length_per_bar_m": 8.74,
+                "count": 10,
+                "section_name": "short_piece_y25",
+            },
         ],
         lap_length_m=1.2,
         helix_bar_size_mm=8,
@@ -51,8 +61,18 @@ def type_iii_config(db):
         pile_type="TYPE_III",
         description="Type III - Enhanced reinforcement",
         main_bar_sections=[
-            {"bar_size": 16, "length_per_bar_m": 15.78, "count": 10, "section_name": "full_cage_y16"},
-            {"bar_size": 25, "length_per_bar_m": 8.74, "count": 10, "section_name": "short_piece_y25"},
+            {
+                "bar_size": 16,
+                "length_per_bar_m": 15.78,
+                "count": 10,
+                "section_name": "full_cage_y16",
+            },
+            {
+                "bar_size": 25,
+                "length_per_bar_m": 8.74,
+                "count": 10,
+                "section_name": "short_piece_y25",
+            },
         ],
         lap_length_m=1.2,
         helix_bar_size_mm=8,

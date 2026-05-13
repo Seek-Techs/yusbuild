@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('piles', '0001_initial'),
-        ('projects', '0001_initial'),
+        ("piles", "0001_initial"),
+        ("projects", "0001_initial"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='pile',
-            constraint=models.UniqueConstraint(fields=('project', 'pile_no'), name='unique_project_pile'),
+            model_name="pile",
+            constraint=models.UniqueConstraint(
+                fields=("project", "pile_no"), name="unique_project_pile"
+            ),
         ),
     ]

@@ -6,41 +6,100 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('piles', '0003_alter_pile_unique_together'),
+        ("piles", "0003_alter_pile_unique_together"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='piletypeconfiguration',
-            name='version',
-            field=models.PositiveIntegerField(default=1, help_text='Configuration version used for calculation traceability'),
+            model_name="piletypeconfiguration",
+            name="version",
+            field=models.PositiveIntegerField(
+                default=1,
+                help_text="Configuration version used for calculation traceability",
+            ),
         ),
         migrations.CreateModel(
-            name='PileCalculationHistory',
+            name="PileCalculationHistory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('trigger', models.CharField(choices=[('create', 'Create'), ('update', 'Update'), ('recalculate', 'Recalculate'), ('boq_repair', 'BOQ Repair')], default='recalculate', max_length=30)),
-                ('reason', models.CharField(blank=True, max_length=255)),
-                ('calculation_version', models.CharField(default='1.0.0', max_length=20)),
-                ('config_version', models.PositiveIntegerField(default=1)),
-                ('input_snapshot', models.JSONField(default=dict)),
-                ('config_snapshot', models.JSONField(default=dict)),
-                ('constants_snapshot', models.JSONField(default=dict)),
-                ('result_snapshot', models.JSONField(default=dict)),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('calculation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='history_entries', to='piles.pilecalculation')),
-                ('pile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='calculation_history', to='piles.pile')),
-                ('triggered_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='pile_calculation_history', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "trigger",
+                    models.CharField(
+                        choices=[
+                            ("create", "Create"),
+                            ("update", "Update"),
+                            ("recalculate", "Recalculate"),
+                            ("boq_repair", "BOQ Repair"),
+                        ],
+                        default="recalculate",
+                        max_length=30,
+                    ),
+                ),
+                ("reason", models.CharField(blank=True, max_length=255)),
+                (
+                    "calculation_version",
+                    models.CharField(default="1.0.0", max_length=20),
+                ),
+                ("config_version", models.PositiveIntegerField(default=1)),
+                ("input_snapshot", models.JSONField(default=dict)),
+                ("config_snapshot", models.JSONField(default=dict)),
+                ("constants_snapshot", models.JSONField(default=dict)),
+                ("result_snapshot", models.JSONField(default=dict)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                (
+                    "calculation",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="history_entries",
+                        to="piles.pilecalculation",
+                    ),
+                ),
+                (
+                    "pile",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="calculation_history",
+                        to="piles.pile",
+                    ),
+                ),
+                (
+                    "triggered_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="pile_calculation_history",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Pile Calculation History',
-                'verbose_name_plural': 'Pile Calculation History',
-                'db_table': 'pile_calculation_history',
-                'ordering': ['-created_at', '-id'],
-                'indexes': [models.Index(fields=['pile', '-created_at'], name='pile_calcul_pile_id_6cf83c_idx'), models.Index(fields=['trigger', '-created_at'], name='pile_calcul_trigger_936e11_idx')],
+                "verbose_name": "Pile Calculation History",
+                "verbose_name_plural": "Pile Calculation History",
+                "db_table": "pile_calculation_history",
+                "ordering": ["-created_at", "-id"],
+                "indexes": [
+                    models.Index(
+                        fields=["pile", "-created_at"],
+                        name="pile_calcul_pile_id_6cf83c_idx",
+                    ),
+                    models.Index(
+                        fields=["trigger", "-created_at"],
+                        name="pile_calcul_trigger_936e11_idx",
+                    ),
+                ],
             },
         ),
     ]
