@@ -65,6 +65,29 @@ class TestHealthEndpoint:
         assert data["status"] == "ok"
         assert data["service"] == "yusbuild-api"
 
+    def test_health_check_includes_request_id(self, api_client):
+        """Responses should include a request ID for tracing."""
+        response = api_client.get("/health/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["X-Request-ID"]
+
+    def test_health_check_preserves_inbound_request_id(self, api_client):
+        """Request ID middleware should preserve upstream request IDs."""
+        response = api_client.get("/health/", HTTP_X_REQUEST_ID="req-test-123")
+
+        assert response["X-Request-ID"] == "req-test-123"
+
+    def test_readiness_check(self, api_client):
+        """Readiness endpoint should verify runtime dependencies."""
+        response = api_client.get("/readiness/")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = json.loads(response.content)
+        assert data["status"] == "ready"
+        assert data["checks"]["database"] == "ok"
+        assert data["checks"]["migrations"] == "ok"
+
 
 class TestProjectEndpoints:
     """Tests for Project CRUD endpoints."""
