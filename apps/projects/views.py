@@ -13,8 +13,8 @@ from apps.projects.serializers import (
     ProjectDetailSerializer,
     ProjectCreateUpdateSerializer,
 )
-from apps.piles.models import PileCalculation
-from apps.piles.calculations import PileCalculator
+from apps.piles.models import PileCalculationHistory
+from apps.piles.services import calculate_and_persist_pile
 from django.db.models import Count, Sum
 
 
@@ -126,18 +126,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         "Pile %s has no calculation record; recalculating before BOQ",
                         pile.pile_no,
                     )
-                    result = PileCalculator.calculate(pile)
-                    calc, _ = PileCalculation.objects.update_or_create(
-                        pile=pile,
-                        defaults={
-                            "main_bars_kg": result.main_bars_kg,
-                            "helix_kg": result.helix_kg,
-                            "stiffeners_kg": result.stiffeners_kg,
-                            "total_steel_kg": result.total_steel_kg,
-                            "design_concrete_m3": result.design_concrete_m3,
-                            "actual_concrete_m3": result.actual_concrete_m3,
-                            "calculation_version": "1.0.0",
-                        },
+                    calc, _, _ = calculate_and_persist_pile(
+                        pile,
+                        triggered_by=request.user,
+                        trigger=PileCalculationHistory.TRIGGER_BOQ_REPAIR,
+                        reason="Missing calculation repaired during BOQ generation",
                     )
 
 

@@ -4,6 +4,7 @@ Core domain: Pile, PileTypeConfiguration, PileCalculation.
 """
 
 import logging
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.projects.models import Project
@@ -93,6 +94,10 @@ class PileTypeConfiguration(models.Model):
     is_active = models.BooleanField(
         default=True,
         help_text="Whether this configuration is active",
+    )
+    version = models.PositiveIntegerField(
+        default=1,
+        help_text="Configuration version used for calculation traceability",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -263,3 +268,70 @@ class PileCalculation(models.Model):
 
     def __str__(self) -> str:
         return f"Calc for {self.pile.pile_no}: {self.total_steel_kg:.2f} kg"
+
+
+class PileCalculationHistory(models.Model):
+    """
+    Immutable calculation audit record.
+
+    Stores the exact inputs, configuration snapshot, constants, actor, and
+    outputs used for each calculation run.
+    """
+
+    TRIGGER_CREATE = "create"
+    TRIGGER_UPDATE = "update"
+    TRIGGER_RECALCULATE = "recalculate"
+    TRIGGER_BOQ_REPAIR = "boq_repair"
+
+    TRIGGER_CHOICES = [
+        (TRIGGER_CREATE, "Create"),
+        (TRIGGER_UPDATE, "Update"),
+        (TRIGGER_RECALCULATE, "Recalculate"),
+        (TRIGGER_BOQ_REPAIR, "BOQ Repair"),
+    ]
+
+    pile = models.ForeignKey(
+        Pile,
+        on_delete=models.CASCADE,
+        related_name="calculation_history",
+    )
+    calculation = models.ForeignKey(
+        PileCalculation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="history_entries",
+    )
+    triggered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pile_calculation_history",
+    )
+    trigger = models.CharField(
+        max_length=30,
+        choices=TRIGGER_CHOICES,
+        default=TRIGGER_RECALCULATE,
+    )
+    reason = models.CharField(max_length=255, blank=True)
+    calculation_version = models.CharField(max_length=20, default="1.0.0")
+    config_version = models.PositiveIntegerField(default=1)
+    input_snapshot = models.JSONField(default=dict)
+    config_snapshot = models.JSONField(default=dict)
+    constants_snapshot = models.JSONField(default=dict)
+    result_snapshot = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "pile_calculation_history"
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["pile", "-created_at"]),
+            models.Index(fields=["trigger", "-created_at"]),
+        ]
+        verbose_name = "Pile Calculation History"
+        verbose_name_plural = "Pile Calculation History"
+
+    def __str__(self) -> str:
+        return f"History for {self.pile.pile_no} at {self.created_at}"

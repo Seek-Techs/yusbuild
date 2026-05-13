@@ -9,7 +9,12 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 from apps.projects.models import Project, ProjectMembership
-from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
+from apps.piles.models import (
+    Pile,
+    PileTypeConfiguration,
+    PileCalculation,
+    PileCalculationHistory,
+)
 
 from django.contrib.auth.models import Group
 
@@ -137,6 +142,9 @@ class TestPileEndpoints:
         assert response.data["pile_no"] == "P-NEW-001"
         assert response.data["calculation_result"] is not None
         assert response.data["calculation_result"]["steel"]["total_kg"] > 0
+        pile = Pile.objects.get(pile_no="P-NEW-001")
+        assert pile.calculation_history.count() == 1
+        assert pile.calculation_history.first().trigger == "create"
 
     def test_get_pile(self, api_client, pile_type_ii):
         """GET /api/v1/piles/{id}/ should return pile with calculation."""
@@ -153,6 +161,8 @@ class TestPileEndpoints:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.data["actual_length_m"] == 22.0
+        assert pile_type_ii.calculation_history.count() == 1
+        assert pile_type_ii.calculation_history.first().trigger == "update"
 
     def test_delete_pile(self, api_client, pile_type_ii):
         """DELETE /api/v1/piles/{id}/ should delete pile."""
@@ -168,11 +178,19 @@ class TestPileCustomActions:
     def test_recalculate(self, api_client, pile_type_ii):
         """POST /api/v1/piles/{id}/recalculate/ should force recalculation."""
         response = api_client.post(
-            f"/api/v1/piles/{pile_type_ii.id}/recalculate/"
+            f"/api/v1/piles/{pile_type_ii.id}/recalculate/",
+            {"reason": "QA recalculation"},
+            format="json",
         )
         assert response.status_code == status.HTTP_200_OK
+        assert "history_id" in response.data
         assert "result" in response.data
         assert response.data["result"]["steel"]["total_kg"] > 0
+        history = PileCalculationHistory.objects.get(id=response.data["history_id"])
+        assert history.trigger == "recalculate"
+        assert history.reason == "QA recalculation"
+        assert history.input_snapshot["pile_no"] == pile_type_ii.pile_no
+        assert history.result_snapshot["steel"]["total_kg"] > 0
 
     def test_breakdown(self, api_client, pile_type_ii):
         """GET /api/v1/piles/{id}/breakdown/ should return full breakdown."""
@@ -185,6 +203,21 @@ class TestPileCustomActions:
         assert "main_bars" in response.data["steel"]
         assert "helix" in response.data["steel"]
         assert "stiffeners" in response.data["steel"]
+
+    def test_calculation_history(self, api_client, pile_type_ii):
+        """GET /api/v1/piles/{id}/calculation-history/ returns audit history."""
+        api_client.post(f"/api/v1/piles/{pile_type_ii.id}/recalculate/")
+
+        response = api_client.get(
+            f"/api/v1/piles/{pile_type_ii.id}/calculation-history/"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        item = response.data["results"][0]
+        assert item["trigger"] == "recalculate"
+        assert item["input_snapshot"]["pile_no"] == pile_type_ii.pile_no
+        assert item["config_snapshot"]["pile_type"] == pile_type_ii.pile_type
 
 
 class TestBOQEndpoint:

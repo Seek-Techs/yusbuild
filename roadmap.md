@@ -1,5 +1,37 @@
-YusBuild from **Functional MVP** to **production-grade commercial construction software** without rewriting the project. # YusBuild Production Roadmap 
-## PHASE 1 — Access Control & Project Security **Objective** Ensure users can only access and modify projects they are authorized to work on. **Why It Matters** JWT authentication proves identity, but production software also needs authorization. Right now, role checks exist, but project-level isolation is still incomplete. **Likely Files/Modules** - apps/common/permissions.py - apps/projects/models.py - apps/projects/views.py - apps/projects/serializers.py - apps/piles/views.py - tests/test_api.py - New: tests/test_permissions.py **Implementation Tasks** - Add project membership/assignment model. - Add object-level permission checks for projects. - Ensure piles inherit access rules from their parent project. - Define role behavior: - admin: all access - engineer: read/write assigned projects - viewer: read-only assigned projects - Restrict queryset results by user role. - Add negative authorization tests. **Recommended Patterns** - Use DRF BasePermission. - Use get_queryset() filtering for row-level isolation. - Use object-level has_object_permission(). - Avoid permission logic inside serializers. **Acceptance Criteria** - Anonymous users cannot access APIs. - Viewers cannot create/update/delete. - Engineers cannot access unassigned projects. - Admins can access all projects. - Piles cannot be accessed outside permitted projects. 
+YusBuild from **Functional MVP** to **production-grade commercial construction software** without rewriting the project. 
+# YusBuild Production Roadmap 
+## PHASE 1 — Access Control & Project Security **Objective** 
+Ensure users can only access and modify projects they are authorized to work on. 
+**Why It Matters** 
+JWT authentication proves identity, but production software also needs authorization. Right now, role checks exist, but project-level isolation is still incomplete. 
+**Likely Files/Modules** 
+- apps/common/permissions.py 
+- apps/projects/models.py 
+- apps/projects/views.py 
+- apps/projects/serializers.py 
+- apps/piles/views.py 
+- tests/test_api.py 
+- New: tests/test_permissions.py 
+**Implementation Tasks** 
+- Add project membership/assignment model. 
+- Add object-level permission checks for projects. 
+- Ensure piles inherit access rules from their parent project. 
+- Define role behavior: 
+- admin: all access 
+- engineer: read/write assigned projects 
+- viewer: read-only assigned projects 
+- Restrict queryset results by user role. 
+- Add negative authorization tests. 
+**Recommended Patterns** 
+- Use DRF BasePermission. 
+- Use get_queryset() filtering for row-level isolation. 
+- Use object-level has_object_permission(). 
+- Avoid permission logic inside serializers. **Acceptance Criteria** 
+- Anonymous users cannot access APIs. 
+- Viewers cannot create/update/delete. 
+- Engineers cannot access unassigned projects. 
+- Admins can access all projects. 
+- Piles cannot be accessed outside permitted projects. 
 **Testing Requirements** 
 - Authenticated/unauthenticated tests. 
 - Role tests. 
@@ -113,18 +145,16 @@ A stable app can still fail in production because of bad secrets, weak Docker de
 - Readiness endpoint tests. 
 - Production config smoke test. 
 **Branch** 
-text
-chore/production-infra-hardening
+text chore/production-infra-hardening
 **Commit Format** 
-text
-chore(config): harden production environment settings
+text chore(config): harden production environment settings
 feat(obs): add readiness checks and request logging
 **Complexity**: High 
 **Production Blocker**: Yes 
 --- 
 ## PHASE 4 — CI/CD & Quality Assurance 
 **Objective** Make every change automatically validated before merge/deployment. 
-**Why It Matters** 
+**Why It Matters**   
 Commercial software cannot rely on manual test execution. 
 **Likely Files/Modules** 
 - .github/workflows/ci.yml 
@@ -161,12 +191,12 @@ Commercial software cannot rely on manual test execution.
 text
 chore/ci-quality-gates
 **Commit Format** 
-text
-ci: add test, lint, migration, and docker checks
+text ci: add test, lint, migration, and docker checks
 **Complexity**: Medium 
 **Production Blocker**: Yes 
 --- 
-## PHASE 5 — Engineering Workflow Features **Objective** 
+## PHASE 5 — Engineering Workflow Features 
+**Objective** 
 Make YusBuild useful in real engineering workflows, not just API demos. 
 **Why It Matters** 
 Construction users need imports, exports, BOQ outputs, and practical config management. 
@@ -201,12 +231,14 @@ Construction users need imports, exports, BOQ outputs, and practical config mana
 - exporters.py 
 - Validate before writing. 
 - Use transactions for bulk saves. 
-- Avoid partial imports unless explicitly supported. **Acceptance Criteria** 
+- Avoid partial imports unless explicitly supported. 
+**Acceptance Criteria** 
 - Users can export BOQ to CSV/Excel. 
 - Users can import pile schedules safely. 
 - Invalid rows return clear errors. 
 - Dry-run mode does not write data. 
-- Bulk import creates calculations atomically. **Testing Requirements** 
+- Bulk import creates calculations atomically. 
+**Testing Requirements** 
 - Valid import test. 
 - Invalid import test. 
 - Duplicate pile import test. 
@@ -234,7 +266,8 @@ A paid SaaS product needs tenant isolation, billing boundaries, auditability, an
 - apps/common/permissions.py 
 - config/settings.py 
 - Existing serializers/views across apps 
-- New: tests/test_tenant_isolation.py **Implementation Tasks** 
+- New: tests/test_tenant_isolation.py 
+**Implementation Tasks** 
 - Add Organization or Company model. 
 - Associate users with organizations. 
 - Associate projects with organizations. 
@@ -249,7 +282,8 @@ A paid SaaS product needs tenant isolation, billing boundaries, auditability, an
 - Tenant filtering in base queryset/mixins. 
 - Avoid passing organization IDs blindly from client. - Derive organization context from authenticated user. 
 - Add audit middleware/service. 
-- Keep billing integration decoupled until needed. **Acceptance Criteria** 
+- Keep billing integration decoupled until needed. 
+**Acceptance Criteria** 
 - User from Company A cannot access Company B data. 
 - Every project belongs to an organization. 
 - Every user belongs to one or more organizations. 
@@ -274,7 +308,8 @@ feat(audit): add enterprise audit events
 1. **Phase 1 — Access Control & Project Security** 
 2. **Phase 2 — Calculation Auditability** 
 3. **Phase 4 — CI/CD & Quality Assurance** 
-4. **Phase 3 — Production Infrastructure Hardening** 5. **Phase 5 — Engineering Workflow Features** 
+4. **Phase 3 — Production Infrastructure Hardening** 
+5. **Phase 5 — Engineering Workflow Features** 
 6. **Phase 6 — Commercial SaaS Readiness** 
 
 # B. Parallelization Plan Can run in parallel: 
@@ -298,7 +333,8 @@ feat(audit): add enterprise audit events
 7. Readiness checks 
 8. Backup/restore plan 
 9. Error monitoring/logging 
-10. Deployment documentation For paid SaaS, add: 
+10. Deployment documentation For paid SaaS, 
+add: 
 1. Tenant/company isolation 
 2. Enterprise audit trail 
 3. Organization-level roles 

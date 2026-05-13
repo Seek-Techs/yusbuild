@@ -9,14 +9,16 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
+from apps.piles.models import Pile, PileTypeConfiguration, PileCalculationHistory
 from apps.piles.serializers import (
     PileDetailSerializer,
     PileCreateUpdateSerializer,
     PileSummarySerializer,
     PileTypeConfigurationSerializer,
+    PileCalculationHistorySerializer,
 )
 from apps.piles.calculations import PileCalculator
+from apps.piles.services import calculate_and_persist_pile
 
 logger = logging.getLogger(__name__)
 
@@ -91,35 +93,26 @@ class PileViewSet(viewsets.ModelViewSet):
         """
         try:
             pile = self.get_object()
-            result = PileCalculator.calculate(pile)
-
-            # Update calculation record
-            calculation, _ = PileCalculation.objects.update_or_create(
-            pile=pile,
-            defaults={
-                "main_bars_kg": result.main_bars_kg,
-                "helix_kg": result.helix_kg,
-                "stiffeners_kg": result.stiffeners_kg,
-                "total_steel_kg": result.total_steel_kg,
-                "design_concrete_m3": result.design_concrete_m3,
-                "actual_concrete_m3": result.actual_concrete_m3,
-                "calculation_version": "1.0.0",
-            },
-        )
-
-            pile.calculation = calculation
+            calculation, history, result = calculate_and_persist_pile(
+                pile,
+                triggered_by=request.user,
+                trigger=PileCalculationHistory.TRIGGER_RECALCULATE,
+                reason=request.data.get("reason", "Manual recalculation"),
+            )
 
             logger.info(
-                "Force recalculation completed for pile %s: steel=%.2f kg, concrete=%.4f m3",
+                "Force recalculation completed for pile %s: steel=%.2f kg, concrete=%.4f m3, history_id=%s",
                 pile.pile_no,
                 calculation.total_steel_kg,
                 calculation.actual_concrete_m3,
-        )
+                history.id,
+            )
 
             return Response(
                 {
                     "message": "Recalculation completed successfully",
                     "pile_no": pile.pile_no,
+                    "history_id": history.id,
                     "result": result.to_dict(),
                 }
             )
@@ -172,6 +165,23 @@ class PileViewSet(viewsets.ModelViewSet):
                 {"error": "Internal error", "detail": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @action(detail=True, methods=["get"], url_path="calculation-history")
+    def calculation_history(self, request, pk=None):
+        """
+        Get immutable calculation history for a pile.
+
+        GET /api/v1/piles/{id}/calculation-history/
+        """
+        pile = self.get_object()
+        history = pile.calculation_history.select_related("triggered_by").all()
+        page = self.paginate_queryset(history)
+        if page is not None:
+            serializer = PileCalculationHistorySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = PileCalculationHistorySerializer(history, many=True)
+        return Response(serializer.data)
 
 
 class PileTypeConfigurationViewSet(viewsets.ReadOnlyModelViewSet):

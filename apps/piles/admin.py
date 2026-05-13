@@ -3,13 +3,19 @@ Django Admin configuration for Piles app.
 """
 
 from django.contrib import admin
-from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
+from apps.piles.models import (
+    Pile,
+    PileTypeConfiguration,
+    PileCalculation,
+    PileCalculationHistory,
+)
 
 
 @admin.register(PileTypeConfiguration)
 class PileTypeConfigurationAdmin(admin.ModelAdmin):
     list_display = [
         "pile_type",
+        "version",
         "is_active",
         "helix_bar_size_mm",
         "helix_pitch_mm",
@@ -49,3 +55,31 @@ class PileCalculationAdmin(admin.ModelAdmin):
     ]
     list_filter = ["calculated_at"]
     readonly_fields = ["calculated_at"]
+
+
+@admin.register(PileCalculationHistory)
+class PileCalculationHistoryAdmin(admin.ModelAdmin):
+    list_display = [
+        "pile",
+        "trigger",
+        "triggered_by",
+        "calculation_version",
+        "config_version",
+        "created_at",
+    ]
+    list_filter = ["trigger", "calculation_version", "config_version", "created_at"]
+    search_fields = ["pile__pile_no", "triggered_by__username", "reason"]
+    readonly_fields = [
+        "pile",
+        "calculation",
+        "triggered_by",
+        "trigger",
+        "reason",
+        "calculation_version",
+        "config_version",
+        "input_snapshot",
+        "config_snapshot",
+        "constants_snapshot",
+        "result_snapshot",
+        "created_at",
+    ]

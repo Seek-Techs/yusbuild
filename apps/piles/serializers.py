@@ -5,9 +5,15 @@ DRF Serializers for the Piles app.
 import logging
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
+from apps.piles.models import (
+    Pile,
+    PileTypeConfiguration,
+    PileCalculation,
+    PileCalculationHistory,
+)
 from apps.projects.models import ProjectMembership
 from apps.piles.calculations import PileCalculator
+from apps.piles.services import calculate_and_persist_pile
 from django.db import transaction
 
 
@@ -128,6 +134,33 @@ class PileCalculationSerializer(serializers.ModelSerializer):
     def get_total_tons(self, obj: PileCalculation) -> float:
         """Convert kg to metric tons."""
         return round(obj.total_steel_kg / 1000, 3)
+
+
+class PileCalculationHistorySerializer(serializers.ModelSerializer):
+    """Serializer for immutable calculation audit records."""
+
+    triggered_by_username = serializers.CharField(
+        source="triggered_by.username",
+        read_only=True,
+    )
+
+    class Meta:
+        model = PileCalculationHistory
+        fields = [
+            "id",
+            "trigger",
+            "reason",
+            "triggered_by",
+            "triggered_by_username",
+            "calculation_version",
+            "config_version",
+            "input_snapshot",
+            "config_snapshot",
+            "constants_snapshot",
+            "result_snapshot",
+            "created_at",
+        ]
+        read_only_fields = fields
 
 
 # ============================================================
@@ -323,7 +356,13 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         pile = Pile.objects.create(**validated_data)
         logger.info("Pile created: %s (project=%s)", pile.pile_no, pile.project.name)
 
-        self._run_calculation(pile)
+        request = self.context.get("request")
+        self._run_calculation(
+            pile,
+            triggered_by=getattr(request, "user", None),
+            trigger="create",
+            reason="Pile created",
+        )
 
         return pile
 
@@ -349,33 +388,41 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         logger.info("Pile updated: %s (recalculate=%s)", instance.pile_no, needs_recalc)
 
         if needs_recalc:
-            self._run_calculation(instance)
+            request = self.context.get("request")
+            self._run_calculation(
+                instance,
+                triggered_by=getattr(request, "user", None),
+                trigger="update",
+                reason="Pile quantity inputs updated",
+            )
 
         return instance
 
 
-    def _run_calculation(self, pile: Pile):
+    def _run_calculation(
+        self,
+        pile: Pile,
+        *,
+        triggered_by=None,
+        trigger="recalculate",
+        reason="",
+    ):
         """Run calculation engine and store results."""
         try:
-            result = PileCalculator.calculate(pile)
-
-            # Store calculation results
-            PileCalculation.objects.update_or_create(
+            calculation, history, result = calculate_and_persist_pile(
                 pile=pile,
-                defaults={
-                    "main_bars_kg": result.main_bars_kg,
-                    "helix_kg": result.helix_kg,
-                    "stiffeners_kg": result.stiffeners_kg,
-                    "total_steel_kg": result.total_steel_kg,
-                    "design_concrete_m3": result.design_concrete_m3,
-                    "actual_concrete_m3": result.actual_concrete_m3,
-                    "calculation_version": "1.0.0",
-                },
+                triggered_by=triggered_by,
+                trigger=trigger,
+                reason=reason,
             )
 
             # Attach result to serializer context for response
             self._calculation_result = result.to_dict()
-            logger.info("Calculation stored for pile %s", pile.pile_no)
+            logger.info(
+                "Calculation stored for pile %s (history_id=%s)",
+                pile.pile_no,
+                history.id,
+            )
 
         except ValueError as exc:
             logger.error("Calculation failed for pile %s: %s", pile.pile_no, str(exc))
