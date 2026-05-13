@@ -7,7 +7,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from apps.projects.models import Project
+from apps.projects.models import Project, ProjectMembership
 from apps.projects.serializers import (
     ProjectListSerializer,
     ProjectDetailSerializer,
@@ -35,11 +35,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return projects with aggregate BOQ totals precomputed."""
-        return Project.objects.annotate(
+        queryset = Project.objects.annotate(
             total_piles_count=Count("piles", distinct=True),
             total_steel_kg_sum=Sum("piles__calculation__total_steel_kg"),
             total_concrete_m3_sum=Sum("piles__calculation__actual_concrete_m3"),
-        )
+        ).order_by("-created_at", "id")
+
+        user = self.request.user
+        user_groups = set(user.groups.values_list("name", flat=True))
+        if not user.is_superuser and "admin" not in user_groups:
+            queryset = queryset.filter(memberships__user=user).distinct()
+
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related("piles__calculation")
+
+        return queryset
+
 
 
     def get_serializer_class(self):
@@ -52,6 +63,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Log project creation."""
         project = serializer.save()
+        user_groups = set(self.request.user.groups.values_list("name", flat=True))
+        role = (
+            ProjectMembership.ROLE_ADMIN
+            if "admin" in user_groups or self.request.user.is_superuser
+            else ProjectMembership.ROLE_ENGINEER
+        )
+        ProjectMembership.objects.get_or_create(
+            project=project,
+            user=self.request.user,
+            defaults={"role": role},
+        )
         logger.info("Project created: %s (id=%s)", project.name, project.id)
         return project
 

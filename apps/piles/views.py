@@ -44,6 +44,15 @@ class PileViewSet(viewsets.ModelViewSet):
     ordering_fields = ["pile_no", "created_at", "design_length_m", "actual_length_m"]
     ordering = ["pile_no"]
 
+    def get_queryset(self):
+        """Return piles visible to the authenticated user."""
+        queryset = super().get_queryset()
+        user = self.request.user
+        user_groups = set(user.groups.values_list("name", flat=True))
+        if user.is_superuser or "admin" in user_groups:
+            return queryset
+        return queryset.filter(project__memberships__user=user).distinct()
+
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
             return PileCreateUpdateSerializer

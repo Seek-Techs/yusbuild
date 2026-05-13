@@ -4,6 +4,7 @@ A Project contains multiple piles and aggregates BOQ data.
 """
 
 import logging
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinLengthValidator
 
@@ -87,3 +88,50 @@ class Project(models.Model):
             total=Sum("calculation__actual_concrete_m3")
         )
         return result["total"] or 0.0
+
+
+class ProjectMembership(models.Model):
+    """User access assignment for a project."""
+
+    ROLE_ADMIN = "admin"
+    ROLE_ENGINEER = "engineer"
+    ROLE_VIEWER = "viewer"
+
+    ROLE_CHOICES = [
+        (ROLE_ADMIN, "Admin"),
+        (ROLE_ENGINEER, "Engineer"),
+        (ROLE_VIEWER, "Viewer"),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="project_memberships",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_ENGINEER,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "project_memberships"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "user"],
+                name="unique_project_membership",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["user", "role"]),
+            models.Index(fields=["project", "role"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} -> {self.project} ({self.role})"

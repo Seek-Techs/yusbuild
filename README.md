@@ -197,7 +197,36 @@ This project demonstrates:
 - [x] Health check endpoint
 - [x] Configurable pile types (data-driven, not hardcoded)
 
+## Backend Stabilization Status
+
+
+### Completed
+feat(core): stabilize pile calculation engine and implement JWT-secured API hardening
+
+YusBuild stabilization update completed.
+Implemented:
+- Core pile calculation engine fixes
+- Serializer and PATCH validation fixes
+- Atomic calculation persistence
+- BOQ aggregation corrections
+- Route conflict resolution
+- JWT authentication
+- Data integrity improvements
+- Logging/runtime stabilization
+
+### Remaining for Production
+Current state:
+Backend is now stable for collaborative development, API integration, and functional testing.
+
+Remaining work before production:
+• CI/CD pipeline
+• Broader test coverage
+• Query optimization
+• Stale calculation/version tracking
+• Role-based permissions
+• Deployment observability and infrastructure hardening
 ---
+
 
 **Built for BuildTech Solutions**
 From Drawings to BOQ, Without the Headache.

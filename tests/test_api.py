@@ -8,21 +8,45 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
-from apps.projects.models import Project
+from apps.projects.models import Project, ProjectMembership
 from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
 
+from django.contrib.auth.models import Group
 
 @pytest.fixture
-def api_client(db):
-    """Create authenticated API test client."""
+def authenticated_user(db):
     user = get_user_model().objects.create_user(
         username="test-user",
         password="test-password",
     )
+    engineer_group, _ = Group.objects.get_or_create(name="engineer")
+    user.groups.add(engineer_group)
+    return user
+
+
+@pytest.fixture
+def api_client(authenticated_user):
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_authenticate(user=authenticated_user)
     return client
 
+
+@pytest.fixture
+def project(db, authenticated_user):
+    project = Project.objects.create(
+        name="Refinery Extension Test Pile",
+        location="Crude Distillation Unit",
+        client="Engineers India Limited",
+        description="Residential development at Lekki, Lagos",
+        status="ACTIVE",
+        created_by="Engr. Yusuf",
+    )
+    ProjectMembership.objects.create(
+        project=project,
+        user=authenticated_user,
+        role=ProjectMembership.ROLE_ENGINEER,
+    )
+    return project
 
 
 class TestHealthEndpoint:
@@ -235,6 +259,67 @@ class TestValidation:
             "actual_length_m": 21.0,
         }
         response = api_client.post("/api/v1/piles/", data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestAuthorization:
+    """Tests for project-level authorization."""
+
+    def test_engineer_cannot_list_unassigned_project(self, api_client, db):
+        """Engineers should not see projects without membership."""
+        Project.objects.create(name="Unassigned Project", status="ACTIVE")
+
+        response = api_client.get("/api/v1/projects/")
+
+        names = [item["name"] for item in response.data["results"]]
+        assert "Unassigned Project" not in names
+
+    def test_viewer_cannot_update_assigned_project(self, db, project):
+        """Viewers should have read-only access to assigned projects."""
+        user = get_user_model().objects.create_user(
+            username="viewer-user",
+            password="test-password",
+        )
+        viewer_group, _ = Group.objects.get_or_create(name="viewer")
+        user.groups.add(viewer_group)
+        ProjectMembership.objects.create(
+            project=project,
+            user=user,
+            role=ProjectMembership.ROLE_VIEWER,
+        )
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        response = client.patch(
+            f"/api/v1/projects/{project.id}/",
+            {"name": "Viewer Update"},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_engineer_cannot_create_pile_for_unassigned_project(
+        self,
+        api_client,
+        db,
+        type_ii_config,
+    ):
+        """Engineers should not write piles into projects they do not belong to."""
+        unassigned_project = Project.objects.create(
+            name="Unassigned Project",
+            status="ACTIVE",
+        )
+        data = {
+            "pile_no": "P-AUTH-001",
+            "pile_type": "TYPE_II",
+            "project": unassigned_project.id,
+            "diameter_mm": 500,
+            "design_length_m": 20.0,
+            "actual_length_m": 21.0,
+        }
+
+        response = api_client.post("/api/v1/piles/", data, format="json")
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_invalid_bar_size(self):

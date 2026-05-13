@@ -6,6 +6,7 @@ import logging
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from apps.piles.models import Pile, PileTypeConfiguration, PileCalculation
+from apps.projects.models import ProjectMembership
 from apps.piles.calculations import PileCalculator
 from django.db import transaction
 
@@ -274,6 +275,27 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         # Validate pile_no uniqueness within project
         project = data.get("project", getattr(self.instance, "project", None))
         pile_no = data.get("pile_no", getattr(self.instance, "pile_no", None))
+
+        request = self.context.get("request")
+        if request and project:
+            user = request.user
+            user_groups = set(user.groups.values_list("name", flat=True))
+            can_write_project = (
+                user.is_superuser
+                or "admin" in user_groups
+                or ProjectMembership.objects.filter(
+                    project=project,
+                    user=user,
+                    role__in=[
+                        ProjectMembership.ROLE_ADMIN,
+                        ProjectMembership.ROLE_ENGINEER,
+                    ],
+                ).exists()
+            )
+            if not can_write_project:
+                raise serializers.ValidationError({
+                    "project": "You do not have write access to this project."
+                })
 
         if pile_no is not None:
             pile_no = pile_no.strip()
