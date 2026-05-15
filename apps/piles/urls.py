@@ -13,4 +13,5 @@ router.register(r"", PileViewSet, basename="pile")
 
 urlpatterns = [
     path("", include(router.urls)),
+    # The BOQ CSV export is handled as an @action on the PileViewSet, so no extra path needed
 ]

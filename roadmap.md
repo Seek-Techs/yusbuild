@@ -185,7 +185,8 @@ feat(obs): add readiness checks and request logging
 **Production Blocker**: Yes 
 --- 
 ## PHASE 4 — CI/CD & Quality Assurance 
-**Objective** Make every change automatically validated before merge/deployment. 
+**Objective** 
+Make every change automatically validated before merge/deployment. 
 
 **Why It Matters**   
 Commercial software cannot rely on manual test execution. 
@@ -305,6 +306,21 @@ feat(import): add validated pile schedule import
 **Complexity**: High 
 **Production Blocker**: No, but required for strong internal adoption 
 --- 
+
+## Phase 5A — Field Execution Records
+
+Build:
+
+apps/execution/
+
+Models:
+
+PileDrivingRecord
+DrivingResistanceLog
+ConcreteRecord
+ReinforcementInspection
+EquipmentRecord
+
 ## PHASE 6 — Commercial SaaS Readiness 
 **Objective** 
 Prepare YusBuild for multi-company use, billing, enterprise controls, and long-term commercial operation. 

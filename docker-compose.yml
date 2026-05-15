@@ -51,6 +51,9 @@ services:
       sh -c "python manage.py migrate --noinput &&
              python manage.py seed_pile_types &&
              gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 60 --access-logfile - --error-logfile - config.wsgi:application"
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
+

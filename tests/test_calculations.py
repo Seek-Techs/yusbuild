@@ -103,7 +103,7 @@ class TestConcreteCalculation:
 
     def test_design_vs_actual_volume(self):
         """
-        Design volume should use design length, 
+        Design volume should use design length,
         actual volume should use actual length.
         """
         result = PileCalculator.calculate_concrete(

@@ -2,9 +2,11 @@
 DRF Views for the Projects app.
 """
 
+import csv
 import logging
 
 from django.db.models import Count, Sum
+from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -249,3 +251,52 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 {"error": "Failed to generate BOQ", "detail": str(exc)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @action(detail=True, methods=["get"], url_path="boq-csv")
+    def boq_csv(self, request, pk=None):
+        """
+        Export Bill of Quantities for a project as CSV.
+
+        GET /api/v1/projects/{id}/boq-csv/
+        """
+        project = self.get_object()
+        piles = project.piles.select_related("calculation").all()
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="boq_{project.id}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "Pile No",
+                "Pile Type",
+                "Diameter (mm)",
+                "Design Length (m)",
+                "Actual Length (m)",
+                "Steel (kg)",
+                "Steel (tons)",
+                "Concrete (m3)",
+                "Main Bars (kg)",
+                "Helix (kg)",
+                "Stiffeners (kg)",
+            ]
+        )
+        for pile in piles:
+            calc = getattr(pile, "calculation", None)
+            if not calc:
+                continue
+            writer.writerow(
+                [
+                    pile.pile_no,
+                    pile.pile_type,
+                    pile.diameter_mm,
+                    pile.design_length_m,
+                    pile.actual_length_m,
+                    round(calc.total_steel_kg, 2),
+                    round(calc.total_steel_kg / 1000, 2),
+                    round(calc.actual_concrete_m3, 4),
+                    round(calc.main_bars_kg, 2),
+                    round(calc.helix_kg, 2),
+                    round(calc.stiffeners_kg, 2),
+                ]
+            )
+        return response

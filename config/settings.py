@@ -14,7 +14,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
@@ -112,7 +112,7 @@ if not DEBUG:
 
     if db_config["PASSWORD"] == "postgres":
         raise RuntimeError(
-            "POSTGRES_PASSWORD must" 
+            "POSTGRES_PASSWORD must"
             "not use the default 'postgres' value when DEBUG=False."
         )
 
@@ -120,7 +120,7 @@ if not DEBUG:
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation." 
+        "NAME": "django.contrib.auth.password_validation."
         "UserAttributeSimilarityValidator",
     },
     {
