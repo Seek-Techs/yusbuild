@@ -25,6 +25,27 @@ logger = logging.getLogger(__name__)
 
 
 class PileViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Pile CRUD + calculation operations.
+
+    list: GET /api/v1/piles/
+    create: POST /api/v1/piles/ (auto-calculates reinforcement)
+    retrieve: GET /api/v1/piles/{id}/
+    update: PUT /api/v1/piles/{id}/
+    partial_update: PATCH /api/v1/piles/{id}/
+    destroy: DELETE /api/v1/piles/{id}/
+
+    Extra actions:
+    POST /api/v1/piles/{id}/recalculate/ - Force recalculation
+    GET /api/v1/piles/{id}/breakdown/ - Get detailed calculation breakdown
+    """
+
+    queryset = Pile.objects.select_related("project", "calculation").all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["pile_type", "project", "diameter_mm"]
+    search_fields = ["pile_no", "location_on_site", "notes"]
+    ordering_fields = ["pile_no", "created_at", "design_length_m", "actual_length_m"]
+    ordering = ["pile_no"]
 
     @action(detail=False, methods=["post"], url_path="bulk-create")
     def bulk_create(self, request):
@@ -54,111 +75,95 @@ class PileViewSet(viewsets.ModelViewSet):
                 transaction.set_rollback(True)
         return Response({"created": results, "errors": errors}, status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST)
 
-                @action(detail=False, methods=["post"], url_path="import-csv")
-                def import_csv(self, request):
-                    """
-                    Import pile schedule from CSV. Bulk creates piles, returns row-level errors.
-                    Supports dry-run validation mode (no DB writes).
-                    """
-                    import csv
-                    import io
-                    from django.db import transaction
-                    from rest_framework import status
-                    file = request.FILES.get("file")
-                    dry_run = request.data.get("dry_run") or request.query_params.get("dry_run")
-                    dry_run = str(dry_run).lower() in ("1", "true", "yes")
-                    if not file:
-                        return Response({"detail": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
-                    decoded = file.read().decode("utf-8")
-                    reader = csv.DictReader(io.StringIO(decoded))
-                    results = []
-                    errors = []
-                    created = []
-                    # Always use atomic block for rollback safety
-                    with transaction.atomic():
-                        for idx, row in enumerate(reader, start=2):  # header is row 1
-                            serializer = PileCreateUpdateSerializer(data=row)
-                            if serializer.is_valid():
-                                if not dry_run:
-                                    pile = serializer.save()
-                                    created.append(pile.id)
-                                    results.append({"row": idx, "status": "created", "id": pile.id})
-                                else:
-                                    results.append({"row": idx, "status": "valid"})
-                            else:
-                                errors.append({"row": idx, "errors": serializer.errors, "data": row})
-                        # Always rollback if dry_run or errors
-                        if dry_run or errors:
-                            transaction.set_rollback(True)
-                    return Response({"created": results, "errors": errors, "dry_run": dry_run}, status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST)
-            @action(detail=False, methods=["get"], url_path="boq-export-xlsx")
-            def boq_export_xlsx(self, request):
-                """
-                Export Bill of Quantities (BOQ) as Excel (.xlsx).
-                """
-                import io
-                from django.http import HttpResponse
-                from openpyxl import Workbook
-                queryset = self.filter_queryset(self.get_queryset())
-                serializer = PileSummarySerializer(queryset, many=True)
-                wb = Workbook()
-                ws = wb.active
-                ws.title = "BOQ"
-                # Write header
-                if serializer.data:
-                    ws.append(list(serializer.data[0].keys()))
-                    for row in serializer.data:
-                        ws.append(list(row.values()))
+    @action(detail=False, methods=["post"], url_path="import-csv")
+    def import_csv(self, request):
+        """
+        Import pile schedule from CSV. Bulk creates piles, returns row-level errors.
+        Supports dry-run validation mode (no DB writes).
+        """
+        import csv
+        import io
+        from django.db import transaction
+        from rest_framework import status
+        file = request.FILES.get("file")
+        dry_run = request.data.get("dry_run") or request.query_params.get("dry_run")
+        dry_run = str(dry_run).lower() in ("1", "true", "yes")
+        if not file:
+            return Response({"detail": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+        decoded = file.read().decode("utf-8")
+        reader = csv.DictReader(io.StringIO(decoded))
+        results = []
+        errors = []
+        created = []
+        # Always use atomic block for rollback safety
+        with transaction.atomic():
+            for idx, row in enumerate(reader, start=2):  # header is row 1
+                serializer = PileCreateUpdateSerializer(data=row)
+                if serializer.is_valid():
+                    if not dry_run:
+                        pile = serializer.save()
+                        created.append(pile.id)
+                        results.append({"row": idx, "status": "created", "id": pile.id})
+                    else:
+                        results.append({"row": idx, "status": "valid"})
                 else:
-                    ws.append(["No data"])
-                output = io.BytesIO()
-                wb.save(output)
-                output.seek(0)
-                response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = 'attachment; filename="boq_export.xlsx"'
-                return response
-        @action(detail=False, methods=["get"], url_path="boq-export-csv")
-        def boq_export_csv(self, request):
-            """
-            Export Bill of Quantities (BOQ) as CSV.
-            """
-            import csv
-            from django.http import HttpResponse
-            queryset = self.filter_queryset(self.get_queryset())
-            # Use summary serializer for export
-            serializer = PileSummarySerializer(queryset, many=True)
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="boq_export.csv"'
-            writer = csv.writer(response)
-            # Write header
-            if serializer.data:
-                writer.writerow(serializer.data[0].keys())
-                for row in serializer.data:
-                    writer.writerow(row.values())
-            else:
-                writer.writerow(["No data"])
-            return response
-    """
-    ViewSet for Pile CRUD + calculation operations.
+                    errors.append({"row": idx, "errors": serializer.errors, "data": row})
+            # Always rollback if dry_run or errors
+            if dry_run or errors:
+                transaction.set_rollback(True)
+        return Response({"created": results, "errors": errors, "dry_run": dry_run}, status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST)
 
-    list: GET /api/v1/piles/
-    create: POST /api/v1/piles/ (auto-calculates reinforcement)
-    retrieve: GET /api/v1/piles/{id}/
-    update: PUT /api/v1/piles/{id}/
-    partial_update: PATCH /api/v1/piles/{id}/
-    destroy: DELETE /api/v1/piles/{id}/
+    @action(detail=False, methods=["get"], url_path="boq-export-xlsx")
+    def boq_export_xlsx(self, request):
+        """
+        Export Bill of Quantities (BOQ) as Excel (.xlsx).
+        """
+        import io
+        from django.http import HttpResponse
+        from openpyxl import Workbook
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = PileSummarySerializer(queryset, many=True)
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "BOQ"
+        # Write header
+        if serializer.data:
+            ws.append(list(serializer.data[0].keys()))
+            for row in serializer.data:
+                ws.append(list(row.values()))
+        else:
+            ws.append(["No data"])
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=boq_export.xlsx'
+        return response
 
-    Extra actions:
-    POST /api/v1/piles/{id}/recalculate/ - Force recalculation
-    GET /api/v1/piles/{id}/breakdown/ - Get detailed calculation breakdown
-    """
-
-    queryset = Pile.objects.select_related("project", "calculation").all()
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["pile_type", "project", "diameter_mm"]
-    search_fields = ["pile_no", "location_on_site", "notes"]
-    ordering_fields = ["pile_no", "created_at", "design_length_m", "actual_length_m"]
-    ordering = ["pile_no"]
+    @action(detail=False, methods=["get"], url_path="boq-export-csv")
+    def boq_export_csv(self, request):
+        """
+        Export Bill of Quantities (BOQ) as CSV.
+        """
+        import csv
+        from django.http import HttpResponse
+        queryset = self.filter_queryset(self.get_queryset())
+        # Use summary serializer for export
+        serializer = PileSummarySerializer(queryset, many=True)
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="boq_export.csv"'
+        writer = csv.writer(response)
+        # Write header
+        if serializer.data:
+            writer.writerow(serializer.data[0].keys())
+            for row in serializer.data:
+                writer.writerow(row.values())
+        else:
+            writer.writerow(["No data"])
+        return response
 
     def get_queryset(self):
         """Return piles visible to the authenticated user."""

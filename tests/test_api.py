@@ -86,25 +86,25 @@ class TestHealthEndpoint:
 
 
 class TestPileBOQExport:
-        @pytest.mark.django_db
-        def test_boq_export_csv_empty(self, api_client):
-            url = "/api/v1/piles/boq-export-csv/"
-            response = api_client.get(url)
-            assert response.status_code == 200
-            content = response.content.decode()
-            assert "No data" in content
+    @pytest.mark.django_db
+    def test_boq_export_csv_empty(self, api_client):
+        url = "/api/v1/piles/boq-export-csv/"
+        response = api_client.get(url)
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "No data" in content
 
-        @pytest.mark.django_db
-        def test_boq_export_xlsx_empty(self, api_client):
-            url = "/api/v1/piles/boq-export-xlsx/"
-            response = api_client.get(url)
-            assert response.status_code == 200
-            import io
-            from openpyxl import load_workbook
-            wb = load_workbook(io.BytesIO(response.content))
-            ws = wb.active
-            assert ws["A1"].value == "No data"
-    class TestPileCSVImport:
+    @pytest.mark.django_db
+    def test_boq_export_xlsx_empty(self, api_client):
+        url = "/api/v1/piles/boq-export-xlsx/"
+        response = api_client.get(url)
+        assert response.status_code == 200
+        import io
+        from openpyxl import load_workbook
+        wb = load_workbook(io.BytesIO(response.content))
+        ws = wb.active
+        assert ws["A1"].value == "No data"
+class TestPileCSVImport:
     @pytest.mark.django_db
     def test_import_csv_no_file(self, api_client):
         response = api_client.post("/api/v1/piles/import-csv/", {}, format="multipart")
@@ -120,163 +120,163 @@ class TestPileBOQExport:
         # Should not crash, but will have no rows
         assert response.status_code == 200 or response.status_code == 400
 
-            class TestPileBulkCreate:
-                    @pytest.mark.django_db
-                    def test_bulk_create_not_list(self, api_client):
-                        payload = {"pile_no": "P-999"}
-                        response = api_client.post("/api/v1/piles/bulk-create/", payload, format="json")
-                        assert response.status_code == 400
-                        assert "Expected a list" in response.json()["detail"]
+class TestPileBulkCreate:
+    @pytest.mark.django_db
+    def test_bulk_create_not_list(self, api_client):
+        payload = {"pile_no": "P-999"}
+        response = api_client.post("/api/v1/piles/bulk-create/", payload, format="json")
+        assert response.status_code == 400
+        assert "Expected a list" in response.json()["detail"]
 
-                    @pytest.mark.django_db
-                    def test_bulk_create_empty_list(self, api_client):
-                        response = api_client.post("/api/v1/piles/bulk-create/", [], format="json")
-                        assert response.status_code == 200
-                        data = response.json()
-                        assert data["created"] == []
-                        assert data["errors"] == []
-                """Test bulk pile creation endpoint."""
+    @pytest.mark.django_db
+    def test_bulk_create_empty_list(self, api_client):
+        response = api_client.post("/api/v1/piles/bulk-create/", [], format="json")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["created"] == []
+        assert data["errors"] == []
+    """Test bulk pile creation endpoint."""
 
-                @pytest.mark.django_db
-                def test_bulk_create_success(self, api_client, project):
-                    payload = [
-                        {
-                            "pile_no": "P-500",
-                            "pile_type": "BORED",
-                            "diameter_mm": 900,
-                            "design_length_m": 22.0,
-                            "actual_length_m": 21.5,
-                            "project": project.id,
-                        },
-                        {
-                            "pile_no": "P-501",
-                            "pile_type": "BORED",
-                            "diameter_mm": 1000,
-                            "design_length_m": 25.0,
-                            "actual_length_m": 24.5,
-                            "project": project.id,
-                        },
-                    ]
-                    response = api_client.post("/api/v1/piles/bulk-create/", payload, format="json")
-                    assert response.status_code == 200
-                    data = response.json()
-                    assert "created" in data
-                    assert len(data["created"]) == 2
-                    assert not data["errors"]
+    @pytest.mark.django_db
+    def test_bulk_create_success(self, api_client, project):
+        payload = [
+            {
+                "pile_no": "P-500",
+                "pile_type": "BORED",
+                "diameter_mm": 900,
+                "design_length_m": 22.0,
+                "actual_length_m": 21.5,
+                "project": project.id,
+            },
+            {
+                "pile_no": "P-501",
+                "pile_type": "BORED",
+                "diameter_mm": 1000,
+                "design_length_m": 25.0,
+                "actual_length_m": 24.5,
+                "project": project.id,
+            },
+        ]
+        response = api_client.post("/api/v1/piles/bulk-create/", payload, format="json")
+        assert response.status_code == 200
+        data = response.json()
+        assert "created" in data
+        assert len(data["created"]) == 2
+        assert not data["errors"]
 
-                @pytest.mark.django_db
-                def test_bulk_create_with_errors(self, api_client, project):
-                    payload = [
-                        {
-                            "pile_no": "P-600",
-                            "pile_type": "BORED",
-                            "diameter_mm": 900,
-                            "design_length_m": 22.0,
-                            "actual_length_m": 21.5,
-                            "project": project.id,
-                        },
-                        {
-                            "pile_no": "P-601",
-                            "pile_type": "BORED",
-                            "diameter_mm": "INVALID",
-                            "design_length_m": 25.0,
-                            "actual_length_m": 24.5,
-                            "project": project.id,
-                        },
-                    ]
-                    response = api_client.post("/api/v1/piles/bulk-create/", payload, format="json")
-                    assert response.status_code == 400
-                    data = response.json()
-                    assert "errors" in data
-                    assert len(data["errors"]) == 1
-                    assert data["errors"][0]["row"] == 2
-                    assert "diameter_mm" in str(data["errors"][0]["errors"])  # Should mention the invalid field
-            @pytest.mark.django_db
-            def test_import_csv_dry_run_success(self, api_client, project):
-                import io
-                csv_content = (
-                    "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
-                    "P-300,BORED,800,20.0,19.5,{project_id}\n"
-                    "P-301,BORED,750,18.0,17.5,{project_id}\n"
-                ).format(project_id=project.id)
-                file = io.BytesIO(csv_content.encode("utf-8"))
-                file.name = "piles.csv"
-                response = api_client.post(
-                    "/api/v1/piles/import-csv/?dry_run=1",
-                    {"file": file},
-                    format="multipart",
-                )
-                assert response.status_code == 200
-                data = response.json()
-                assert data["dry_run"] is True
-                assert len(data["created"]) == 2
-                assert all(r["status"] == "valid" for r in data["created"])
-                assert not data["errors"]
+    @pytest.mark.django_db
+    def test_bulk_create_with_errors(self, api_client, project):
+        payload = [
+            {
+                "pile_no": "P-600",
+                "pile_type": "BORED",
+                "diameter_mm": 900,
+                "design_length_m": 22.0,
+                "actual_length_m": 21.5,
+                "project": project.id,
+            },
+            {
+                "pile_no": "P-601",
+                "pile_type": "BORED",
+                "diameter_mm": "INVALID",
+                "design_length_m": 25.0,
+                "actual_length_m": 24.5,
+                "project": project.id,
+            },
+        ]
+        response = api_client.post("/api/v1/piles/bulk-create/", payload, format="json")
+        assert response.status_code == 400
+        data = response.json()
+        assert "errors" in data
+        assert len(data["errors"]) == 1
+        assert data["errors"][0]["row"] == 2
+        assert "diameter_mm" in str(data["errors"][0]["errors"])  # Should mention the invalid field
+    @pytest.mark.django_db
+    def test_import_csv_dry_run_success(self, api_client, project):
+        import io
+        csv_content = (
+            "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
+            "P-300,BORED,800,20.0,19.5,{project_id}\n"
+            "P-301,BORED,750,18.0,17.5,{project_id}\n"
+        ).format(project_id=project.id)
+        file = io.BytesIO(csv_content.encode("utf-8"))
+        file.name = "piles.csv"
+        response = api_client.post(
+            "/api/v1/piles/import-csv/?dry_run=1",
+            {"file": file},
+            format="multipart",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["dry_run"] is True
+        assert len(data["created"]) == 2
+        assert all(r["status"] == "valid" for r in data["created"])
+        assert not data["errors"]
 
-            @pytest.mark.django_db
-            def test_import_csv_dry_run_with_errors(self, api_client, project):
-                import io
-                csv_content = (
-                    "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
-                    "P-400,BORED,800,20.0,19.5,{project_id}\n"
-                    "P-401,BORED,INVALID,18.0,17.5,{project_id}\n"
-                ).format(project_id=project.id)
-                file = io.BytesIO(csv_content.encode("utf-8"))
-                file.name = "piles.csv"
-                response = api_client.post(
-                    "/api/v1/piles/import-csv/?dry_run=true",
-                    {"file": file},
-                    format="multipart",
-                )
-                assert response.status_code == 400
-                data = response.json()
-                assert data["dry_run"] is True
-                assert len(data["errors"]) == 1
-                assert data["errors"][0]["row"] == 3
-        """Test pile schedule CSV import endpoint."""
+    @pytest.mark.django_db
+    def test_import_csv_dry_run_with_errors(self, api_client, project):
+        import io
+        csv_content = (
+            "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
+            "P-400,BORED,800,20.0,19.5,{project_id}\n"
+            "P-401,BORED,INVALID,18.0,17.5,{project_id}\n"
+        ).format(project_id=project.id)
+        file = io.BytesIO(csv_content.encode("utf-8"))
+        file.name = "piles.csv"
+        response = api_client.post(
+            "/api/v1/piles/import-csv/?dry_run=true",
+            {"file": file},
+            format="multipart",
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert data["dry_run"] is True
+        assert len(data["errors"]) == 1
+        assert data["errors"][0]["row"] == 3
+    """Test pile schedule CSV import endpoint."""
 
-        @pytest.mark.django_db
-        def test_import_csv_success(self, api_client, project):
-            import io
-            csv_content = (
-                "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
-                "P-100,BORED,800,20.0,19.5,{project_id}\n"
-                "P-101,BORED,750,18.0,17.5,{project_id}\n"
-            ).format(project_id=project.id)
-            file = io.BytesIO(csv_content.encode("utf-8"))
-            file.name = "piles.csv"
-            response = api_client.post(
-                "/api/v1/piles/import-csv/",
-                {"file": file},
-                format="multipart",
-            )
-            assert response.status_code == 200
-            data = response.json()
-            assert "created" in data
-            assert len(data["created"]) == 2
-            assert not data["errors"]
+    @pytest.mark.django_db
+    def test_import_csv_success(self, api_client, project):
+        import io
+        csv_content = (
+            "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
+            "P-100,BORED,800,20.0,19.5,{project_id}\n"
+            "P-101,BORED,750,18.0,17.5,{project_id}\n"
+        ).format(project_id=project.id)
+        file = io.BytesIO(csv_content.encode("utf-8"))
+        file.name = "piles.csv"
+        response = api_client.post(
+            "/api/v1/piles/import-csv/",
+            {"file": file},
+            format="multipart",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "created" in data
+        assert len(data["created"]) == 2
+        assert not data["errors"]
 
-        @pytest.mark.django_db
-        def test_import_csv_row_errors(self, api_client, project):
-            import io
-            csv_content = (
-                "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
-                "P-200,BORED,800,20.0,19.5,{project_id}\n"
-                "P-201,BORED,INVALID,18.0,17.5,{project_id}\n"
-            ).format(project_id=project.id)
-            file = io.BytesIO(csv_content.encode("utf-8"))
-            file.name = "piles.csv"
-            response = api_client.post(
-                "/api/v1/piles/import-csv/",
-                {"file": file},
-                format="multipart",
-            )
-            assert response.status_code == 400
-            data = response.json()
-            assert "errors" in data
-            assert len(data["errors"]) == 1
-            assert data["errors"][0]["row"] == 3
-            assert "diameter_mm" in str(data["errors"][0]["errors"])  # Should mention the invalid field
+    @pytest.mark.django_db
+    def test_import_csv_row_errors(self, api_client, project):
+        import io
+        csv_content = (
+            "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
+            "P-200,BORED,800,20.0,19.5,{project_id}\n"
+            "P-201,BORED,INVALID,18.0,17.5,{project_id}\n"
+        ).format(project_id=project.id)
+        file = io.BytesIO(csv_content.encode("utf-8"))
+        file.name = "piles.csv"
+        response = api_client.post(
+            "/api/v1/piles/import-csv/",
+            {"file": file},
+            format="multipart",
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert "errors" in data
+        assert len(data["errors"]) == 1
+        assert data["errors"][0]["row"] == 3
+        assert "diameter_mm" in str(data["errors"][0]["errors"])  # Should mention the invalid field
     """Test BOQ CSV export endpoint."""
 
     @pytest.mark.django_db
@@ -313,7 +313,7 @@ class TestPileBOQExport:
         response = api_client.get(url)
         assert response.status_code == 200
         assert response["Content-Type"].startswith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        assert response["Content-Disposition"].endswith("boq_export.xlsx"")
+        assert response["Content-Disposition"].endswith("boq_export.xlsx")
         # Check that the response is a valid Excel file by loading it
         import io
         from openpyxl import load_workbook

@@ -37,6 +37,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return projects with aggregate BOQ totals precomputed."""
+        # Guard against swagger introspection
+        if getattr(self, "swagger_fake_view", False):
+            return Project.objects.none()
+        
         queryset = Project.objects.annotate(
             total_piles_count=Count("piles", distinct=True),
             total_steel_kg_sum=Sum("piles__calculation__total_steel_kg"),

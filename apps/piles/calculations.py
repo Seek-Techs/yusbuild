@@ -402,9 +402,12 @@ class PileCalculator:
         # Get or create type configuration
         from apps.piles.models import PileTypeConfiguration
 
+        # Map BORED to TYPE_I for configuration lookup
+        config_pile_type = "TYPE_I" if pile.pile_type == "BORED" else pile.pile_type
+        
         try:
             type_config = PileTypeConfiguration.objects.get(
-                pile_type=pile.pile_type,
+                pile_type=config_pile_type,
                 is_active=True,
             )
         except PileTypeConfiguration.DoesNotExist as err:
