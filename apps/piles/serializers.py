@@ -312,6 +312,13 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
                 except (ValueError, TypeError):
                     pass  # Let the field validator handle the error
         
+        # Coerce project ID to integer if it's a string (from CSV)
+        if "project" in data and isinstance(data["project"], str):
+            try:
+                data["project"] = int(data["project"])
+            except (ValueError, TypeError):
+                pass  # Let the field validator handle the error
+        
         return super().to_internal_value(data)
 
     def validate_pile_type(self, value):

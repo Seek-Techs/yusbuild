@@ -39,16 +39,16 @@ def ensure_pile_type_configs(db):
             "description": "Type II - Full reinforcement with lapped bars",
             "main_bar_sections": [
                 {
-                    "bar_size": 25,
-                    "length_per_bar_m": 15.78,
-                    "count": 10,
-                    "section_name": "top_main_bars_y25",
-                },
-                {
                     "bar_size": 16,
                     "length_per_bar_m": 15.78,
                     "count": 10,
-                    "section_name": "bottom_main_bars_y16",
+                    "section_name": "full_cage_y16",
+                },
+                {
+                    "bar_size": 25,
+                    "length_per_bar_m": 8.74,
+                    "count": 10,
+                    "section_name": "short_piece_y25",
                 },
             ],
             "lap_length_m": 1.2,
@@ -132,27 +132,30 @@ def type_i_config(db):
     - TOP: 16mm dia, 10 bars
     - BOTTOM: 16mm dia, 10 bars
     """
-    return PileTypeConfiguration.objects.create(
+    obj, _ = PileTypeConfiguration.objects.get_or_create(
         pile_type="TYPE_I",
-        description="Type I - Driven Cast In-Situ with standard reinforcement",
-        main_bar_sections=[
-            {
-                "bar_size": 16,
-                "length_per_bar_m": 15.78,
-                "count": 10,
-                "section_name": "full_cage_y16",
-            },
-        ],
-        lap_length_m=1.0,
-        helix_bar_size_mm=8,
-        helix_pitch_mm=300,
-        cage_diameter_mm=450,
-        helix_end_turns=6,
-        stiffener_bar_size_mm=12,
-        stiffener_ring_diameter_mm=500,
-        stiffener_spacing_m=3.0,
-        concrete_cover_mm=25,
+        defaults={
+            "description": "Type I - Driven Cast In-Situ with standard reinforcement",
+            "main_bar_sections": [
+                {
+                    "bar_size": 16,
+                    "length_per_bar_m": 15.78,
+                    "count": 10,
+                    "section_name": "full_cage_y16",
+                },
+            ],
+            "lap_length_m": 1.0,
+            "helix_bar_size_mm": 8,
+            "helix_pitch_mm": 300,
+            "cage_diameter_mm": 450,
+            "helix_end_turns": 6,
+            "stiffener_bar_size_mm": 12,
+            "stiffener_ring_diameter_mm": 500,
+            "stiffener_spacing_m": 3.0,
+            "concrete_cover_mm": 25,
+        },
     )
+    return obj
 
 
 @pytest.fixture
@@ -163,33 +166,36 @@ def type_ii_config(db):
     - TOP: 25mm dia, 10 bars
     - BOTTOM: 16mm dia, 10 bars
     """
-    return PileTypeConfiguration.objects.create(
+    obj, _ = PileTypeConfiguration.objects.get_or_create(
         pile_type="TYPE_II",
-        description="Type II - Full reinforcement with lapped bars",
-        main_bar_sections=[
-            {
-                "bar_size": 25,
-                "length_per_bar_m": 15.78,
-                "count": 10,
-                "section_name": "top_main_bars_y25",
-            },
-            {
-                "bar_size": 16,
-                "length_per_bar_m": 15.78,
-                "count": 10,
-                "section_name": "bottom_main_bars_y16",
-            },
-        ],
-        lap_length_m=1.2,
-        helix_bar_size_mm=8,
-        helix_pitch_mm=250,
-        cage_diameter_mm=480,
-        helix_end_turns=8,
-        stiffener_bar_size_mm=16,
-        stiffener_ring_diameter_mm=543.6,
-        stiffener_spacing_m=2.5,
-        concrete_cover_mm=20,
+        defaults={
+            "description": "Type II - Full reinforcement with lapped bars",
+            "main_bar_sections": [
+                {
+                    "bar_size": 16,
+                    "length_per_bar_m": 15.78,
+                    "count": 10,
+                    "section_name": "full_cage_y16",
+                },
+                {
+                    "bar_size": 25,
+                    "length_per_bar_m": 8.74,
+                    "count": 10,
+                    "section_name": "short_piece_y25",
+                },
+            ],
+            "lap_length_m": 1.2,
+            "helix_bar_size_mm": 8,
+            "helix_pitch_mm": 250,
+            "cage_diameter_mm": 480,
+            "helix_end_turns": 8,
+            "stiffener_bar_size_mm": 16,
+            "stiffener_ring_diameter_mm": 543.6,
+            "stiffener_spacing_m": 2.5,
+            "concrete_cover_mm": 20,
+        },
     )
+    return obj
 
 
 @pytest.fixture
@@ -200,45 +206,48 @@ def type_iii_config(db):
     - TOP: 28mm dia, 5 bars + 25mm dia, 5 bars
     - BOTTOM: 20mm dia, 5 bars + 16mm dia, 5 bars
     """
-    return PileTypeConfiguration.objects.create(
+    obj, _ = PileTypeConfiguration.objects.get_or_create(
         pile_type="TYPE_III",
-        description="Type III - Enhanced reinforcement",
-        main_bar_sections=[
-            {
-                "bar_size": 28,
-                "length_per_bar_m": 15.78,
-                "count": 5,
-                "section_name": "top_main_bars_1_y28",
-            },
-            {
-                "bar_size": 25,
-                "length_per_bar_m": 15.78,
-                "count": 5,
-                "section_name": "top_main_bars_2_y25",
-            },
-            {
-                "bar_size": 20,
-                "length_per_bar_m": 15.78,
-                "count": 5,
-                "section_name": "bottom_main_bars_1_y20",
-            },
-            {
-                "bar_size": 16,
-                "length_per_bar_m": 15.78,
-                "count": 5,
-                "section_name": "bottom_main_bars_2_y16",
-            },
-        ],
-        lap_length_m=1.2,
-        helix_bar_size_mm=8,
-        helix_pitch_mm=250,
-        cage_diameter_mm=480,
-        helix_end_turns=8,
-        stiffener_bar_size_mm=16,
-        stiffener_ring_diameter_mm=543.6,
-        stiffener_spacing_m=2.0,
-        concrete_cover_mm=20,
+        defaults={
+            "description": "Type III - Enhanced reinforcement",
+            "main_bar_sections": [
+                {
+                    "bar_size": 28,
+                    "length_per_bar_m": 15.78,
+                    "count": 5,
+                    "section_name": "top_main_bars_1_y28",
+                },
+                {
+                    "bar_size": 25,
+                    "length_per_bar_m": 15.78,
+                    "count": 5,
+                    "section_name": "top_main_bars_2_y25",
+                },
+                {
+                    "bar_size": 20,
+                    "length_per_bar_m": 15.78,
+                    "count": 5,
+                    "section_name": "bottom_main_bars_1_y20",
+                },
+                {
+                    "bar_size": 16,
+                    "length_per_bar_m": 15.78,
+                    "count": 5,
+                    "section_name": "bottom_main_bars_2_y16",
+                },
+            ],
+            "lap_length_m": 1.2,
+            "helix_bar_size_mm": 8,
+            "helix_pitch_mm": 250,
+            "cage_diameter_mm": 480,
+            "helix_end_turns": 8,
+            "stiffener_bar_size_mm": 16,
+            "stiffener_ring_diameter_mm": 543.6,
+            "stiffener_spacing_m": 2.0,
+            "concrete_cover_mm": 20,
+        },
     )
+    return obj
 
 
 @pytest.fixture

@@ -64,7 +64,7 @@ class PileViewSet(viewsets.ModelViewSet):
         created = []
         with transaction.atomic():
             for idx, row in enumerate(data, start=1):
-                serializer = PileCreateUpdateSerializer(data=row)
+                serializer = PileCreateUpdateSerializer(data=row, context={'request': request})
                 if serializer.is_valid():
                     pile = serializer.save()
                     created.append(pile.id)
@@ -98,7 +98,7 @@ class PileViewSet(viewsets.ModelViewSet):
         # Always use atomic block for rollback safety
         with transaction.atomic():
             for idx, row in enumerate(reader, start=2):  # header is row 1
-                serializer = PileCreateUpdateSerializer(data=row)
+                serializer = PileCreateUpdateSerializer(data=row, context={'request': request})
                 if serializer.is_valid():
                     if not dry_run:
                         pile = serializer.save()

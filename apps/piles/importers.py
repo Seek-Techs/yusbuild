@@ -9,17 +9,19 @@ from apps.piles.models import Pile, Project
 
 def validate_pile_row(row: dict[str, Any]) -> tuple[bool, dict[str, str]]:
     errors = {}
+    # Accept either 'project' or 'project_id' column names
     required_fields = [
         "pile_no",
         "pile_type",
         "diameter_mm",
         "design_length_m",
         "actual_length_m",
-        "project_id",
     ]
     for field in required_fields:
         if not row.get(field):
             errors[field] = "Missing required field"
+    if not row.get("project") and not row.get("project_id"):
+        errors["project"] = "Missing required field"
     # Add more validation as needed
     return (len(errors) == 0, errors)
 
@@ -41,7 +43,8 @@ def import_pile_schedule_csv(
                 row_errors.append({"row": idx, "errors": errors, "data": row})
                 continue
             try:
-                project = Project.objects.get(id=row["project_id"])
+                project_id = row.get("project") or row.get("project_id")
+                project = Project.objects.get(id=int(project_id))
                 pile = Pile(
                     project=project,
                     pile_no=row["pile_no"],
