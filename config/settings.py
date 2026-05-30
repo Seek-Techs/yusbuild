@@ -49,6 +49,10 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.projects",
     "apps.piles",
+    "apps.execution",
+    "apps.approvals",
+    "apps.evidence",
+    "apps.verification",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -177,6 +181,14 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "YusBuild API",
     "DESCRIPTION": "Pile Reinforcement Quantification API",
     "VERSION": "1.0.0",
+    "ENUM_NAME_OVERRIDES": {
+        "PileTypeEnum": "apps.piles.models.Pile.PILE_TYPE_CHOICES",
+        "PileTypeConfigurationEnum": (
+            "apps.piles.models.PileTypeConfiguration.PILE_TYPE_CHOICES"
+        ),
+        "ProjectStatusEnum": "apps.projects.models.ProjectStatus.choices",
+        "VarianceStatusEnum": "apps.verification.models.VarianceStatus.choices",
+    },
 }
 
 # Logging configuration
@@ -228,6 +240,21 @@ LOGGING = {
             "propagate": False,
         },
         "apps.projects": {
+            "handlers": ["console", "file", "error_file"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "apps.execution": {
+            "handlers": ["console", "file", "error_file"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "apps.evidence": {
+            "handlers": ["console", "file", "error_file"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "apps.verification": {
             "handlers": ["console", "file", "error_file"],
             "level": LOG_LEVEL,
             "propagate": False,

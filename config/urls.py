@@ -22,6 +22,10 @@ urlpatterns = [
     path("readiness/", readiness_check, name="readiness_check"),
     path("api/v1/projects/", include("apps.projects.urls")),
     path("api/v1/piles/", include("apps.piles.urls")),
+    path("api/v1/execution/", include("apps.execution.urls")),
+    path("api/v1/approvals/", include("apps.approvals.urls")),
+    path("api/v1/evidence/", include("apps.evidence.urls")),
+    path("api/v1/verification/", include("apps.verification.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/docs/",
