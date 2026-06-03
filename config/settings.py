@@ -53,6 +53,8 @@ LOCAL_APPS = [
     "apps.approvals",
     "apps.evidence",
     "apps.verification",
+    "apps.certification",
+    "apps.audit",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -188,6 +190,9 @@ SPECTACULAR_SETTINGS = {
         ),
         "ProjectStatusEnum": "apps.projects.models.ProjectStatus.choices",
         "VarianceStatusEnum": "apps.verification.models.VarianceStatus.choices",
+        "CertificationPackageStateEnum": (
+            "apps.certification.models.CertificationPackageState.choices"
+        ),
     },
 }
 
@@ -255,6 +260,11 @@ LOGGING = {
             "propagate": False,
         },
         "apps.verification": {
+            "handlers": ["console", "file", "error_file"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "apps.certification": {
             "handlers": ["console", "file", "error_file"],
             "level": LOG_LEVEL,
             "propagate": False,

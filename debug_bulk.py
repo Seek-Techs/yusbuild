@@ -1,14 +1,15 @@
 import os
+
 import django
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from rest_framework.test import APIClient
+
+from apps.piles.serializers import PileCreateUpdateSerializer
+from apps.projects.models import Project, ProjectMembership
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.test_settings")
 django.setup()
-
-from rest_framework.test import APIClient
-from apps.projects.models import Project, ProjectMembership
-from apps.piles.serializers import PileCreateUpdateSerializer
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 
 # Create user
 User = get_user_model()

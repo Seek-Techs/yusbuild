@@ -3,6 +3,9 @@ import hashlib
 from django.db import transaction
 from django.utils import timezone
 
+from apps.audit.models import EventType
+from apps.audit.services.audit_service import record_audit_event
+from apps.audit.services.timeline_service import record_timeline_event
 from apps.evidence.models import (
     EvidenceItem,
     EvidenceLink,
@@ -101,12 +104,38 @@ def link_evidence_to_version(
             is_primary=True,
         ).update(is_primary=False)
 
-    return EvidenceLink.objects.create(
+    evidence_link = EvidenceLink.objects.create(
         evidence=locked_evidence,
         execution_record_version=version,
         linked_by=_actor_or_none(actor),
         is_primary=is_primary,
     )
+
+    record_timeline_event(
+        actor,
+        locked_evidence.project,
+        version.execution_record.pile,
+        EventType.EVIDENCE_LINKED,
+        {
+            "evidence_link_id": evidence_link.id,
+            "evidence_id": locked_evidence.id,
+            "execution_record_version_id": version.id,
+            "is_primary": is_primary,
+        },
+    )
+    record_audit_event(
+        actor,
+        locked_evidence.project,
+        version.execution_record.pile,
+        EventType.EVIDENCE_LINKED,
+        {
+            "evidence_link_id": evidence_link.id,
+            "evidence_id": locked_evidence.id,
+            "execution_record_version_id": version.id,
+            "is_primary": is_primary,
+        },
+    )
+    return evidence_link
 
 
 @transaction.atomic

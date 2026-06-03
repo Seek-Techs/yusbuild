@@ -1,5 +1,8 @@
 from django.db import transaction
 
+from apps.audit.models import EventType
+from apps.audit.services.audit_service import record_audit_event
+from apps.audit.services.timeline_service import record_timeline_event
 from apps.execution.models import (
     DrivingResistanceLog,
     ExecutionRecord,
@@ -61,4 +64,27 @@ def create_revision_from_record(
                 ]
             )
 
-    return submit_execution_record(locked_record, actor)
+    version = submit_execution_record(locked_record, actor)
+    record_timeline_event(
+        actor,
+        version.execution_record.project,
+        version.execution_record.pile,
+        EventType.EXECUTION_REVISION,
+        {
+            "execution_record_version_id": version.id,
+            "version_no": version.version_no,
+            "supersedes_version_id": version.supersedes_version_id,
+        },
+    )
+    record_audit_event(
+        actor,
+        version.execution_record.project,
+        version.execution_record.pile,
+        EventType.EXECUTION_REVISION,
+        {
+            "execution_record_version_id": version.id,
+            "version_no": version.version_no,
+            "supersedes_version_id": version.supersedes_version_id,
+        },
+    )
+    return version

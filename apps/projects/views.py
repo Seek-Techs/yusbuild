@@ -302,7 +302,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     )
 
             if calc is None:
-                steel_kg = steel_tons = concrete_m3 = main_bars_kg = helix_kg = stiffeners_kg = 0.0
+                (
+                    steel_kg, 
+                    steel_tons, 
+                    concrete_m3, 
+                    main_bars_kg, 
+                    helix_kg, 
+                    stiffeners_kg
+                    ) = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
             else:
                 steel_kg = round(calc.total_steel_kg, 2)
                 steel_tons = round(calc.total_steel_kg / 1000, 2)

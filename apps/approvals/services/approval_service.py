@@ -5,6 +5,9 @@ from apps.approvals.models import (
     ApprovalDecision,
     ApprovalDecisionType,
 )
+from apps.audit.models import EventType
+from apps.audit.services.audit_service import record_audit_event
+from apps.audit.services.timeline_service import record_timeline_event
 from apps.execution.models import ExecutionRecord, ExecutionRecordState
 from apps.execution.services.state_machine import ensure_transition_allowed
 
@@ -79,6 +82,28 @@ def _record_decision(
             "approval_decision_id": approval_decision.id,
             "previous_state": previous_state,
             "new_state": target_state,
+        },
+    )
+    record_timeline_event(
+        actor,
+        version.execution_record.project,
+        version.execution_record.pile,
+        EventType.APPROVAL_DECISION,
+        {
+            "approval_decision_id": approval_decision.id,
+            "decision": decision,
+            "target_state": target_state,
+        },
+    )
+    record_audit_event(
+        actor,
+        version.execution_record.project,
+        version.execution_record.pile,
+        EventType.APPROVAL_DECISION,
+        {
+            "approval_decision_id": approval_decision.id,
+            "decision": decision,
+            "target_state": target_state,
         },
     )
     return approval_decision

@@ -1,12 +1,15 @@
 from django.db import transaction
 
+from apps.audit.models import EventType
+from apps.audit.services.audit_service import record_audit_event
+from apps.audit.services.timeline_service import record_timeline_event
 from apps.execution.models import (
+    DrivingResistanceLog,
     ExecutionRecord,
-    ExecutionRecordType,
     ExecutionRecordState,
+    ExecutionRecordType,
     ExecutionRecordVersion,
     PileDrivingRecord,
-    DrivingResistanceLog,
     make_snapshot_hash,
 )
 from apps.execution.services.state_machine import ensure_transition_allowed
@@ -39,7 +42,10 @@ def create_draft_driving_record(validated_data: dict, actor):
 
 
 @transaction.atomic
-def update_draft_driving_record(driving_record: PileDrivingRecord, validated_data: dict):
+def update_draft_driving_record(
+    driving_record: PileDrivingRecord, 
+    validated_data: dict
+    ):
     """Update a mutable draft/returned driving record and replace draft log rows."""
     logs_data = validated_data.pop("resistance_logs", None)
     locked_record = PileDrivingRecord.objects.select_for_update().get(
@@ -95,6 +101,29 @@ def submit_execution_record(execution_record: ExecutionRecord, actor):
             "submitted_at",
             "updated_at",
         ]
+    )
+
+    record_timeline_event(
+        actor,
+        locked_record.project,
+        locked_record.pile,
+        EventType.EXECUTION_SUBMISSION,
+        {
+            "execution_record_id": locked_record.id,
+            "execution_record_version_id": version.id,
+            "version_no": version.version_no,
+        },
+    )
+    record_audit_event(
+        actor,
+        locked_record.project,
+        locked_record.pile,
+        EventType.EXECUTION_SUBMISSION,
+        {
+            "execution_record_id": locked_record.id,
+            "execution_record_version_id": version.id,
+            "version_no": version.version_no,
+        },
     )
     return version
 

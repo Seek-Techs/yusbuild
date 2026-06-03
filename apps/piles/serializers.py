@@ -322,14 +322,19 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
     def validate_pile_type(self, value):
-        """Validate pile_type is a valid choice (normalization done in to_internal_value)."""
+        """Validate pile_type is a valid choice 
+        (normalization done in to_internal_value)."""
         if not value:
             raise serializers.ValidationError("Pile type is required.")
         
         valid_choices = [choice[0] for choice in Pile.PILE_TYPE_CHOICES]
         if value not in valid_choices:
             raise serializers.ValidationError(
-                f'"{value}" is not a valid choice. Valid choices are: {", ".join(valid_choices)}'
+                f'"{value}" is not a valid choice. Valid choices are: {
+                    ", ".join(
+                        valid_choices
+                        )
+                        }'
             )
         return value
 

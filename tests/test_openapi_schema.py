@@ -27,3 +27,5 @@ def test_openapi_schema_generation_is_clean():
     assert "/api/v1/approvals/approve/" in schema
     assert "/api/v1/evidence/upload/" in schema
     assert "/api/v1/verification/run-checks/{execution_record_version_id}/" in schema
+    assert "/api/v1/certification/packages/" in schema
+    assert "/api/v1/certification/packages/{id}/certify/" in schema

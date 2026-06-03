@@ -1,21 +1,19 @@
 import io
-import json
 
 import pytest
 from django.contrib.auth import get_user_model
 
 from apps.piles.importers import import_pile_schedule_csv
-from apps.piles.models import PileTypeConfiguration, Pile
+from apps.piles.models import Pile, PileTypeConfiguration
 from apps.piles.serializers import PileCreateUpdateSerializer, PileSummarySerializer
-from apps.projects.models import Project, ProjectMembership
 
 
 @pytest.mark.django_db
 def test_importer_dry_run_does_not_persist(project):
     csv_content = (
         "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
-        "DRY1,BORED,600,10.0,9.5,{project_id}\n"
-    ).format(project_id=project.id)
+        f"DRY1,BORED,600,10.0,9.5,{project.id}\n"
+    )
 
     f = io.StringIO(csv_content)
     f.name = "dry.csv"
@@ -30,8 +28,8 @@ def test_importer_dry_run_does_not_persist(project):
 def test_importer_reports_row_errors(project):
     csv_content = (
         "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
-        "ERR1,BORED,INVALID,10.0,9.5,{project_id}\n"
-    ).format(project_id=project.id)
+        f"ERR1,BORED,INVALID,10.0,9.5,{project.id}\n"
+    )
 
     f = io.StringIO(csv_content)
     f.name = "err.csv"
@@ -44,7 +42,12 @@ def test_importer_reports_row_errors(project):
 @pytest.mark.django_db
 def test_serializer_to_internal_value_and_validation(project, db):
     # Ensure a PileTypeConfiguration exists for TYPE_I
-    PileTypeConfiguration.objects.get_or_create(pile_type="TYPE_I", defaults={"is_active": True})
+    PileTypeConfiguration.objects.get_or_create(
+        pile_type="TYPE_I", 
+        defaults={
+            "is_active": True
+            }
+            )
 
     User = get_user_model()
     user = User.objects.create_user(username="su", password="pw", is_superuser=True)

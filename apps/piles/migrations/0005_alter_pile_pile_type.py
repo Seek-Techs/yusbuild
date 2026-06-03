@@ -13,6 +13,29 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pile',
             name='pile_type',
-            field=models.CharField(choices=[('TYPE_I', 'Type I'), ('TYPE_II', 'Type II'), ('TYPE_III', 'Type III'), ('BORED', 'Type I - Bored')], db_index=True, help_text='Pile type determines reinforcement configuration', max_length=20),
+            field=models.CharField(
+                choices=[
+                    (
+                        'TYPE_I', 
+                        'Type I'
+                        ), 
+                        (
+                            'TYPE_II', 
+                            'Type II'
+                            ), 
+                            (
+                                'TYPE_III', 
+                                'Type III'
+                                ), 
+                                (
+                                    'BORED', 
+                                    'Type I - Bored'
+                                    )
+                                    ], 
+                                    db_index=True, 
+                                    help_text=('Pile type determines '
+                                    'reinforcement configuration'),
+                                    max_length=20
+                                    ),
         ),
     ]

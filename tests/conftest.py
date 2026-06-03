@@ -3,7 +3,6 @@ Pytest fixtures for YusBuild tests.
 """
 
 import pytest
-from django.db import transaction
 
 from apps.piles.models import Pile, PileTypeConfiguration
 from apps.projects.models import Project

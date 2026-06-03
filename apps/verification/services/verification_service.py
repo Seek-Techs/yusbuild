@@ -1,6 +1,9 @@
 from django.db import transaction
 from django.utils import timezone
 
+from apps.audit.models import EventType
+from apps.audit.services.audit_service import record_audit_event
+from apps.audit.services.timeline_service import record_timeline_event
 from apps.execution.models import ExecutionRecordVersion
 from apps.verification.models import (
     VarianceFlag,
@@ -55,7 +58,32 @@ def run_verification_checks(execution_record_version: ExecutionRecordVersion):
     flags = []
     for check in RULE_CHECKS:
         flags.extend(check(context))
-    return sorted(flags, key=lambda flag: (flag.category, flag.rule_code, flag.id))
+    flags = sorted(flags, key=lambda flag: (flag.category, flag.rule_code, flag.id))
+    
+    if flags:
+        record_timeline_event(
+            None,
+            execution_record_version.execution_record.project,
+            execution_record_version.execution_record.pile,
+            EventType.VERIFICATION_RUN,
+            {
+                "execution_record_version_id": execution_record_version.id,
+                "flag_count": len(flags),
+            },
+        )
+        record_audit_event(
+            None,
+            execution_record_version.execution_record.project,
+            execution_record_version.execution_record.pile,
+            EventType.VERIFICATION_RUN,
+            {
+                "execution_record_version_id": execution_record_version.id,
+                "flag_count": len(flags),
+            },
+        )
+    
+    return flags
+
 
 
 def _transition_flag(flag: VarianceFlag, actor, *, status: str, comment: str = ""):
