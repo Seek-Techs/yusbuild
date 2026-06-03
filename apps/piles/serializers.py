@@ -172,13 +172,9 @@ class PileCalculationHistorySerializer(serializers.ModelSerializer):
 class PileSummarySerializer(serializers.ModelSerializer):
     """Lightweight pile serializer for list views."""
 
-    steel_kg = serializers.FloatField(
-        source="calculation.total_steel_kg", read_only=True
-    )
+    steel_kg = serializers.SerializerMethodField()
     steel_tons = serializers.SerializerMethodField()
-    concrete_m3 = serializers.FloatField(
-        source="calculation.actual_concrete_m3", read_only=True
-    )
+    concrete_m3 = serializers.SerializerMethodField()
 
     class Meta:
         model = Pile
@@ -195,11 +191,31 @@ class PileSummarySerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def get_steel_kg(self, obj: Pile) -> float:
+        """Get total steel weight, or 0 if no calculation."""
+        try:
+            calc = obj.calculation
+            return calc.total_steel_kg if calc else 0.0
+        except Exception:
+            return 0.0
+
     def get_steel_tons(self, obj: Pile) -> float:
         """Convert kg to metric tons."""
-        if hasattr(obj, "calculation") and obj.calculation:
-            return round(obj.calculation.total_steel_kg / 1000, 2)
+        try:
+            calc = obj.calculation
+            if calc:
+                return round(calc.total_steel_kg / 1000, 2)
+        except Exception:
+            pass
         return 0.0
+
+    def get_concrete_m3(self, obj: Pile) -> float:
+        """Get concrete volume, or 0 if no calculation."""
+        try:
+            calc = obj.calculation
+            return calc.actual_concrete_m3 if calc else 0.0
+        except Exception:
+            return 0.0
 
 
 class PileDetailSerializer(serializers.ModelSerializer):
@@ -261,15 +277,79 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    def to_internal_value(self, data):
+        """
+        Transform incoming data before field validation.
+        Coerces numeric strings to integers.
+        """
+        # Normalize pile_type variants (map variants to canonical form)
+        if "pile_type" in data and isinstance(data["pile_type"], str):
+            pile_type_map = {
+                "BORED": "BORED",  # Keep BORED as-is
+                "TYPE_I": "TYPE_I",
+                "TYPE 1": "TYPE_I",
+                "TYPE_II": "TYPE_II",
+                "TYPE II": "TYPE_II",
+                "TYPE 2": "TYPE_II",
+                "TYPE_III": "TYPE_III",
+                "TYPE III": "TYPE_III",
+                "TYPE 3": "TYPE_III",
+            }
+            original = data["pile_type"]
+            data["pile_type"] = pile_type_map.get(original.upper().strip(), original)
+        
+        # Coerce numeric strings to integers for numeric fields
+        numeric_fields = ["diameter_mm", "design_length_m", "actual_length_m"]
+        for field in numeric_fields:
+            if field in data and isinstance(data[field], str):
+                try:
+                    # Try float first, then convert to int if whole number
+                    val = float(data[field])
+                    if field == "diameter_mm":
+                        data[field] = int(val)
+                    else:
+                        data[field] = val
+                except (ValueError, TypeError):
+                    pass  # Let the field validator handle the error
+        
+        # Coerce project ID to integer if it's a string (from CSV)
+        if "project" in data and isinstance(data["project"], str):
+            try:
+                data["project"] = int(data["project"])
+            except (ValueError, TypeError):
+                pass  # Let the field validator handle the error
+        
+        return super().to_internal_value(data)
+
+    def validate_pile_type(self, value):
+        """Validate pile_type is a valid choice 
+        (normalization done in to_internal_value)."""
+        if not value:
+            raise serializers.ValidationError("Pile type is required.")
+        
+        valid_choices = [choice[0] for choice in Pile.PILE_TYPE_CHOICES]
+        if value not in valid_choices:
+            raise serializers.ValidationError(
+                f'"{value}" is not a valid choice. Valid choices are: {
+                    ", ".join(
+                        valid_choices
+                        )
+                        }'
+            )
+        return value
+
     def validate(self, data):
         """Validate pile data."""
 
         instance = getattr(self, "instance", None)
         pile_type = data.get("pile_type", getattr(instance, "pile_type", None))
 
+        # Map BORED to TYPE_I for configuration lookup
+        config_pile_type = "TYPE_I" if pile_type == "BORED" else pile_type
+        
         # Validate pile type configuration exists
         if not PileTypeConfiguration.objects.filter(
-            pile_type=pile_type,
+            pile_type=config_pile_type,
             is_active=True,
         ).exists():
             raise serializers.ValidationError(

@@ -127,6 +127,7 @@ class Pile(models.Model):
         ("TYPE_I", "Type I"),
         ("TYPE_II", "Type II"),
         ("TYPE_III", "Type III"),
+        ("BORED", "Type I - Bored"),
     ]
 
     project = models.ForeignKey(

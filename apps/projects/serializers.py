@@ -4,6 +4,7 @@ DRF Serializers for the Projects app.
 
 import logging
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.projects.models import Project
@@ -64,7 +65,8 @@ class ProjectDetailSerializer(ProjectListSerializer):
             "piles",
         ]
 
-    def get_piles(self, obj: Project):
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
+    def get_piles(self, obj: Project) -> list[dict]:
         """Return simplified pile data for the project."""
         from apps.piles.serializers import PileSummarySerializer
 
