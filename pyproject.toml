@@ -1,13 +1,1 @@
-[tool.ruff]
-line-length = 88
-target-version = "py312"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
-ignore = ["F403", "F405"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "auto"
-
+'[tool.ruff]line-length = 88exclude = ["*/migrations/*", ".venv", "__pycache__"]' 
