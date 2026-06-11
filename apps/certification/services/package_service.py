@@ -47,9 +47,7 @@ def ensure_package_transition_allowed(
 
 
 def _get_package_primary_pile(package: CertificationPackage):
-    primary_line = (
-        package.lines.select_related("pile").order_by("id").first()
-    )
+    primary_line = package.lines.select_related("pile").order_by("id").first()
     if primary_line is None:
         raise ValueError("Certification package must contain at least one line.")
     return primary_line.pile

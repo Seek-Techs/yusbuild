@@ -185,22 +185,26 @@ class PileCalculationResult:
                     "bar_size": f"Y{self.helix.bar_size_mm}" if self.helix else None,
                     "pitch_mm": self.helix.pitch_mm if self.helix else None,
                     "n_turns": self.helix.n_turns if self.helix else None,
-                    "total_length_m": round(self.helix.total_length_m, 3)
-                    if self.helix
-                    else None,
+                    "total_length_m": (
+                        round(self.helix.total_length_m, 3) if self.helix else None
+                    ),
                     "weight_kg": round(self.helix_kg, 3),
                 },
                 "stiffeners": {
-                    "bar_size": f"Y{self.stiffener.bar_size_mm}"
-                    if self.stiffener
-                    else None,
+                    "bar_size": (
+                        f"Y{self.stiffener.bar_size_mm}" if self.stiffener else None
+                    ),
                     "n_rings": self.stiffener.n_rings if self.stiffener else None,
-                    "ring_diameter_mm": round(self.stiffener.ring_diameter_mm, 1)
-                    if self.stiffener
-                    else None,
-                    "total_length_m": round(self.stiffener.total_length_m, 3)
-                    if self.stiffener
-                    else None,
+                    "ring_diameter_mm": (
+                        round(self.stiffener.ring_diameter_mm, 1)
+                        if self.stiffener
+                        else None
+                    ),
+                    "total_length_m": (
+                        round(self.stiffener.total_length_m, 3)
+                        if self.stiffener
+                        else None
+                    ),
                     "weight_kg": round(self.stiffeners_kg, 3),
                 },
                 "total_kg": round(self.total_steel_kg, 3),
@@ -404,7 +408,7 @@ class PileCalculator:
 
         # Map BORED to TYPE_I for configuration lookup
         config_pile_type = "TYPE_I" if pile.pile_type == "BORED" else pile.pile_type
-        
+
         try:
             type_config = PileTypeConfiguration.objects.get(
                 pile_type=config_pile_type,

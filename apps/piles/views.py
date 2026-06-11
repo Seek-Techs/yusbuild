@@ -51,52 +51,41 @@ class PileViewSet(viewsets.ModelViewSet):
     def bulk_create(self, request):
         """
         Bulk create piles with atomic transaction safety.
-        Accepts a list of pile objects. All-or-nothing: if any row fails, 
+        Accepts a list of pile objects. All-or-nothing: if any row fails,
         none are created.
         Returns row-level validation errors.
         """
         from django.db import transaction
         from rest_framework import status
+
         data = request.data
         if not isinstance(data, list):
             return Response(
-                {
-                    "detail": "Expected a list of pile objects."
-                    }, 
-                    status=status.HTTP_400_BAD_REQUEST
-                    )
+                {"detail": "Expected a list of pile objects."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         results = []
         errors = []
         created = []
         with transaction.atomic():
             for idx, row in enumerate(data, start=1):
                 serializer = PileCreateUpdateSerializer(
-                    data=row, 
-                    context={
-                        'request': request
-                        }
-                        )
+                    data=row, context={"request": request}
+                )
                 if serializer.is_valid():
                     pile = serializer.save()
                     created.append(pile.id)
                     results.append({"row": idx, "status": "created", "id": pile.id})
                 else:
                     errors.append(
-                        {
-                            "row": idx, 
-                            "errors": serializer.errors, 
-                            "data": row
-                            }
-                            )
+                        {"row": idx, "errors": serializer.errors, "data": row}
+                    )
             if errors:
                 transaction.set_rollback(True)
         return Response(
-            {
-                "created": results, 
-                "errors": errors
-                }, 
-                status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST
-                )
+            {"created": results, "errors": errors},
+            status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST,
+        )
 
     @action(detail=False, methods=["post"], url_path="import-csv")
     def import_csv(self, request):
@@ -109,16 +98,14 @@ class PileViewSet(viewsets.ModelViewSet):
 
         from django.db import transaction
         from rest_framework import status
+
         file = request.FILES.get("file")
         dry_run = request.data.get("dry_run") or request.query_params.get("dry_run")
         dry_run = str(dry_run).lower() in ("1", "true", "yes")
         if not file:
             return Response(
-                {
-                    "detail": "No file uploaded."
-                    }, 
-                    status=status.HTTP_400_BAD_REQUEST
-                    )
+                {"detail": "No file uploaded."}, status=status.HTTP_400_BAD_REQUEST
+            )
         decoded = file.read().decode("utf-8")
         reader = csv.DictReader(io.StringIO(decoded))
         results = []
@@ -128,11 +115,8 @@ class PileViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             for idx, row in enumerate(reader, start=2):  # header is row 1
                 serializer = PileCreateUpdateSerializer(
-                    data=row, 
-                    context={
-                        'request': request
-                        }
-                        )
+                    data=row, context={"request": request}
+                )
                 if serializer.is_valid():
                     if not dry_run:
                         pile = serializer.save()
@@ -142,22 +126,15 @@ class PileViewSet(viewsets.ModelViewSet):
                         results.append({"row": idx, "status": "valid"})
                 else:
                     errors.append(
-                        {"row": idx, 
-                         "errors": serializer.errors, 
-                         "data": row
-                         }
-                         )
+                        {"row": idx, "errors": serializer.errors, "data": row}
+                    )
             # Always rollback if dry_run or errors
             if dry_run or errors:
                 transaction.set_rollback(True)
         return Response(
-            {
-                "created": results, 
-                "errors": errors, 
-                "dry_run": dry_run
-                }, 
-                status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST
-                )
+            {"created": results, "errors": errors, "dry_run": dry_run},
+            status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST,
+        )
 
     @action(detail=False, methods=["get"], url_path="boq-export-xlsx")
     def boq_export_xlsx(self, request):
@@ -168,6 +145,7 @@ class PileViewSet(viewsets.ModelViewSet):
 
         from django.http import HttpResponse
         from openpyxl import Workbook
+
         queryset = self.filter_queryset(self.get_queryset())
         serializer = PileSummarySerializer(queryset, many=True)
         wb = Workbook()
@@ -185,9 +163,9 @@ class PileViewSet(viewsets.ModelViewSet):
         output.seek(0)
         response = HttpResponse(
             output.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        response['Content-Disposition'] = 'attachment; filename=boq_export.xlsx'
+        response["Content-Disposition"] = "attachment; filename=boq_export.xlsx"
         return response
 
     @action(detail=False, methods=["get"], url_path="boq-export-csv")
@@ -198,11 +176,12 @@ class PileViewSet(viewsets.ModelViewSet):
         import csv
 
         from django.http import HttpResponse
+
         queryset = self.filter_queryset(self.get_queryset())
         # Use summary serializer for export
         serializer = PileSummarySerializer(queryset, many=True)
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="boq_export.csv"'
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="boq_export.csv"'
         writer = csv.writer(response)
         # Write header
         if serializer.data:

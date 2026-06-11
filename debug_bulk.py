@@ -61,4 +61,3 @@ response = client.post("/api/v1/piles/bulk-create/", [payload_row], format="json
 print(f"Status: {response.status_code}")
 data = response.json()
 print(f"Response: {data}")
-

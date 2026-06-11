@@ -102,9 +102,12 @@ class TestPileBOQExport:
         import io
 
         from openpyxl import load_workbook
+
         wb = load_workbook(io.BytesIO(response.content))
         ws = wb.active
         assert ws["A1"].value == "No data"
+
+
 class TestPileCSVImport:
     @pytest.mark.django_db
     def test_import_csv_no_file(self, api_client):
@@ -115,18 +118,19 @@ class TestPileCSVImport:
     @pytest.mark.django_db
     def test_import_csv_empty_file(self, api_client):
         import io
+
         file = io.BytesIO(b"")
         file.name = "empty.csv"
         response = api_client.post(
-            "/api/v1/piles/import-csv/", 
-            {"file": file}, 
-            format="multipart")
+            "/api/v1/piles/import-csv/", {"file": file}, format="multipart"
+        )
         # Should not crash, but will have no rows
         assert response.status_code == 200 or response.status_code == 400
 
     @pytest.mark.django_db
     def test_import_csv_dry_run_success(self, api_client, project):
         import io
+
         csv_content = (
             "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
             f"P-300,BORED,800,20.0,19.5,{project.id}\n"
@@ -149,6 +153,7 @@ class TestPileCSVImport:
     @pytest.mark.django_db
     def test_import_csv_dry_run_with_errors(self, api_client, project):
         import io
+
         csv_content = (
             "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
             f"P-400,BORED,800,20.0,19.5,{project.id}\n"
@@ -170,6 +175,7 @@ class TestPileCSVImport:
     @pytest.mark.django_db
     def test_import_csv_success(self, api_client, project):
         import io
+
         csv_content = (
             "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
             f"P-100,BORED,800,20.0,19.5,{project.id}\n"
@@ -191,6 +197,7 @@ class TestPileCSVImport:
     @pytest.mark.django_db
     def test_import_csv_row_errors(self, api_client, project):
         import io
+
         csv_content = (
             "pile_no,pile_type,diameter_mm,design_length_m,actual_length_m,project\n"
             f"P-200,BORED,800,20.0,19.5,{project.id}\n"
@@ -208,15 +215,16 @@ class TestPileCSVImport:
         assert "errors" in data
         assert len(data["errors"]) == 1
         assert data["errors"][0]["row"] == 3
-        assert "diameter_mm" in str(data["errors"][0]["errors"])  
+        assert "diameter_mm" in str(data["errors"][0]["errors"])
         # Should mention the invalid field
+
 
 # class TestPileBulkCreate:
 #     @pytest.mark.django_db
 #     def test_bulk_create_not_list(self, api_client):
 #         payload = {"pile_no": "P-999"}
 #         response = api_client.post(
-# "/api/v1/piles/bulk-create/", 
+# "/api/v1/piles/bulk-create/",
 # payload, format="json")
 #         assert response.status_code == 400
 #         assert "Expected a list" in response.json()["detail"]
@@ -251,8 +259,8 @@ class TestPileCSVImport:
 #             },
 #         ]
 #         response = api_client.post(
-# "/api/v1/piles/bulk-create/", 
-# payload, 
+# "/api/v1/piles/bulk-create/",
+# payload,
 # format="json")
 #         assert response.status_code == 200
 #         data = response.json()
@@ -281,14 +289,14 @@ class TestPileCSVImport:
 #             },
 #         ]
 #         response = api_client.post(
-# "/api/v1/piles/bulk-create/", 
+# "/api/v1/piles/bulk-create/",
 # payload, format="json")
 #         assert response.status_code == 400
 #         data = response.json()
 #         assert "errors" in data
 #         assert len(data["errors"]) == 1
 #         assert data["errors"][0]["row"] == 2
-#         assert "diameter_mm" in str(data["errors"][0]["errors"])  
+#         assert "diameter_mm" in str(data["errors"][0]["errors"])
 # # Should mention the invalid field
 
 
@@ -307,6 +315,7 @@ class TestPileBulkCreate:
         data = response.json()
         assert data["created"] == []
         assert data["errors"] == []
+
     """Test bulk pile creation endpoint."""
 
     @pytest.mark.django_db
@@ -401,12 +410,13 @@ class TestPileBulkCreate:
         assert response.status_code == 200
         assert response["Content-Type"].startswith(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        )
         assert response["Content-Disposition"].endswith("boq_export.xlsx")
         # Check that the response is a valid Excel file by loading it
         import io
 
         from openpyxl import load_workbook
+
         wb = load_workbook(io.BytesIO(response.content))
         ws = wb.active
         headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
@@ -433,17 +443,21 @@ class TestProjectEndpoints:
         response = api_client.get(f"/api/v1/projects/{project.id}/boq-csv/")
         assert response.status_code == 200
         assert response["Content-Type"].startswith("text/csv")
-        assert f'attachment; filename="boq_{project.id}.csv"' in response[
-            "Content-Disposition"
-            ]
+        assert (
+            f'attachment; filename="boq_{project.id}.csv"'
+            in response["Content-Disposition"]
+        )
         content = response.content.decode()
         # Check CSV headers
-        assert ("Pile No,Pile Type,Diameter (mm),"
-        "Design Length (m),Actual Length (m),Steel (kg),"
-        "Steel (tons),Concrete (m3),Main Bars (kg),"
-        "Helix (kg),Stiffeners (kg)" in content)
+        assert (
+            "Pile No,Pile Type,Diameter (mm),"
+            "Design Length (m),Actual Length (m),Steel (kg),"
+            "Steel (tons),Concrete (m3),Main Bars (kg),"
+            "Helix (kg),Stiffeners (kg)" in content
+        )
         # Check pile data row
         assert "P-001" in content
+
     """Tests for Project CRUD endpoints."""
 
     def test_list_projects(self, api_client, project):

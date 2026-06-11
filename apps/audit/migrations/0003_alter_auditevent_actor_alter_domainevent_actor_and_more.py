@@ -8,41 +8,42 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('audit', '0002_alter_auditevent_options_alter_domainevent_options_and_more'),
+        ("audit", "0002_alter_auditevent_options_alter_domainevent_options_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='auditevent',
-            name='actor',
+            model_name="auditevent",
+            name="actor",
             field=models.ForeignKey(
-                blank=True, 
-                null=True, 
-                on_delete=django.db.models.deletion.SET_NULL, 
-                related_name='%(class)ss', 
-                to=settings.AUTH_USER_MODEL
-                ),
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="%(class)ss",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='domainevent',
-            name='actor',
+            model_name="domainevent",
+            name="actor",
             field=models.ForeignKey(
-                blank=True, 
-                null=True, 
-                on_delete=django.db.models.deletion.SET_NULL, 
-                related_name='%(class)ss', 
-                to=settings.AUTH_USER_MODEL),
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="%(class)ss",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='timelineevent',
-            name='actor',
+            model_name="timelineevent",
+            name="actor",
             field=models.ForeignKey(
-                blank=True, 
-                null=True, 
-                on_delete=django.db.models.deletion.SET_NULL, 
-                related_name='%(class)ss', 
-                to=settings.AUTH_USER_MODEL
-                ),
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="%(class)ss",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

@@ -43,9 +43,8 @@ def create_draft_driving_record(validated_data: dict, actor):
 
 @transaction.atomic
 def update_draft_driving_record(
-    driving_record: PileDrivingRecord, 
-    validated_data: dict
-    ):
+    driving_record: PileDrivingRecord, validated_data: dict
+):
     """Update a mutable draft/returned driving record and replace draft log rows."""
     logs_data = validated_data.pop("resistance_logs", None)
     locked_record = PileDrivingRecord.objects.select_for_update().get(
@@ -72,9 +71,8 @@ def update_draft_driving_record(
 @transaction.atomic
 def submit_execution_record(execution_record: ExecutionRecord, actor):
     """Create an immutable submitted version and move the header to SUBMITTED."""
-    locked_record = (
-        ExecutionRecord.objects.select_for_update()
-        .get(pk=execution_record.pk)
+    locked_record = ExecutionRecord.objects.select_for_update().get(
+        pk=execution_record.pk
     )
 
     ensure_transition_allowed(

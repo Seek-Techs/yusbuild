@@ -26,4 +26,3 @@ def add_consultant_comment(execution_record_version, actor, comment: str):
         metadata={"consultant_comment_id": consultant_comment.id},
     )
     return consultant_comment
-

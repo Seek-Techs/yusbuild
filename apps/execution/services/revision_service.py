@@ -40,9 +40,8 @@ def create_revision_from_record(
     The previous submitted version remains untouched and is linked through
     supersedes_version on the new version.
     """
-    locked_record = (
-        ExecutionRecord.objects.select_for_update()
-        .get(pk=execution_record.pk)
+    locked_record = ExecutionRecord.objects.select_for_update().get(
+        pk=execution_record.pk
     )
     ensure_transition_allowed(
         locked_record.current_state,

@@ -210,9 +210,9 @@ class PileDrivingRecord(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
-            existing = PileDrivingRecord.objects.select_related(
-                "execution_record"
-            ).get(pk=self.pk)
+            existing = PileDrivingRecord.objects.select_related("execution_record").get(
+                pk=self.pk
+            )
             if not existing.execution_record.is_editable:
                 raise ValidationError("Submitted execution records are immutable.")
         super().save(*args, **kwargs)

@@ -39,12 +39,9 @@ class AppendOnlyModel(models.Model):
         related_name="%(class)ss",
     )
     event_type = models.CharField(
-        max_length=80, 
-        choices=EventType.choices, 
-        db_index=True)
-    timestamp = models.DateTimeField(
-        default=timezone.now, 
-        db_index=True)
+        max_length=80, choices=EventType.choices, db_index=True
+    )
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
     metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:

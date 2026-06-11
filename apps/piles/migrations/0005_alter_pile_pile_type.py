@@ -6,36 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('piles', '0004_piletypeconfiguration_version_pilecalculationhistory'),
+        ("piles", "0004_piletypeconfiguration_version_pilecalculationhistory"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='pile',
-            name='pile_type',
+            model_name="pile",
+            name="pile_type",
             field=models.CharField(
                 choices=[
-                    (
-                        'TYPE_I', 
-                        'Type I'
-                        ), 
-                        (
-                            'TYPE_II', 
-                            'Type II'
-                            ), 
-                            (
-                                'TYPE_III', 
-                                'Type III'
-                                ), 
-                                (
-                                    'BORED', 
-                                    'Type I - Bored'
-                                    )
-                                    ], 
-                                    db_index=True, 
-                                    help_text=('Pile type determines '
-                                    'reinforcement configuration'),
-                                    max_length=20
-                                    ),
+                    ("TYPE_I", "Type I"),
+                    ("TYPE_II", "Type II"),
+                    ("TYPE_III", "Type III"),
+                    ("BORED", "Type I - Bored"),
+                ],
+                db_index=True,
+                help_text=("Pile type determines " "reinforcement configuration"),
+                max_length=20,
+            ),
         ),
     ]

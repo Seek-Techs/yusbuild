@@ -32,4 +32,3 @@ class ConsultantCommentAdmin(admin.ModelAdmin):
 class ApprovalActionLogAdmin(admin.ModelAdmin):
     list_display = ["id", "execution_record_version", "actor", "action", "created_at"]
     list_filter = ["action"]
-
