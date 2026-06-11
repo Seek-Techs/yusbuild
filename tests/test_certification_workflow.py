@@ -357,8 +357,7 @@ def test_package_lifecycle_to_certified_freezes_quantities(
         ("certify", CertificationPackageState.CERTIFIED),
     ]:
         response = certification_client.post(
-            "/api/v1/certification/packages/"
-            f"{draft_certification_package.id}/{action}/"
+            f"/api/v1/certification/packages/{draft_certification_package.id}/{action}/"
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["current_state"] == expected_state

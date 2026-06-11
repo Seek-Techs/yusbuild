@@ -331,10 +331,8 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
         if value not in valid_choices:
             raise serializers.ValidationError(
                 f'"{value}" is not a valid choice. Valid choices are: {
-                    ", ".join(
-                        valid_choices
-                        )
-                        }'
+                    ", ".join(valid_choices)
+                }'
             )
         return value
 

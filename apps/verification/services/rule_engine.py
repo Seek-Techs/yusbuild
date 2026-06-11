@@ -155,8 +155,7 @@ def run_concrete_checks(context: RuleContext) -> list[VarianceFlag]:
                         severity=VarianceSeverity.WARNING,
                         rule_code="CONCRETE_OUTSIDE_TOLERANCE",
                         message=(
-                            "Recorded concrete volume differs from theoretical "
-                            "volume."
+                            "Recorded concrete volume differs from theoretical volume."
                         ),
                         expected_value=f"{theoretical:.6f} +/- {tolerance:.6f}",
                         reported_value=recorded,
@@ -341,7 +340,7 @@ def run_blow_count_checks(context: RuleContext) -> list[VarianceFlag]:
                 severity=VarianceSeverity.CRITICAL,
                 rule_code="BLOW_COUNT_IMPOSSIBLE_PROGRESSION",
                 message=(
-                    "Resistance log depth or penetration progression is " "impossible."
+                    "Resistance log depth or penetration progression is impossible."
                 ),
                 expected_value="monotonic depth and positive penetration",
                 reported_value="invalid progression",
