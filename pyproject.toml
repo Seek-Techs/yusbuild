@@ -1,1 +1,6 @@
-'[tool.ruff]line-length = 88exclude = ["*/migrations/*", ".venv", "__pycache__"]' 
+[tool.ruff]
+line-length = 88
+exclude = ["*/migrations/*", ".venv", "__pycache__", "build", "dist"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/test_settings.py" = ["F403", "F405"]
