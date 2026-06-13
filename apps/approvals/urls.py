@@ -9,4 +9,3 @@ router.register(r"", ApprovalWorkflowViewSet, basename="approval")
 urlpatterns = [
     path("", include(router.urls)),
 ]
-

@@ -43,11 +43,8 @@ def test_importer_reports_row_errors(project):
 def test_serializer_to_internal_value_and_validation(project, db):
     # Ensure a PileTypeConfiguration exists for TYPE_I
     PileTypeConfiguration.objects.get_or_create(
-        pile_type="TYPE_I", 
-        defaults={
-            "is_active": True
-            }
-            )
+        pile_type="TYPE_I", defaults={"is_active": True}
+    )
 
     User = get_user_model()
     user = User.objects.create_user(username="su", password="pw", is_superuser=True)

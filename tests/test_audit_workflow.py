@@ -167,11 +167,8 @@ def test_timeline_query_helpers_filter_by_project_and_pile(
     assert pile_events[0].event_type == EventType.EVIDENCE_VERIFIED
 
     filtered_events = list(
-        list_timeline_events(
-            project_id=audit_project.id, 
-            pile_id=pile_1.id
-            )
-            )
+        list_timeline_events(project_id=audit_project.id, pile_id=pile_1.id)
+    )
     assert len(filtered_events) == 1
     assert filtered_events[0].pile_id == pile_1.id
 

@@ -100,7 +100,7 @@ def ensure_pile_type_configs(db):
             "concrete_cover_mm": 20,
         },
     ]
-    
+
     for config_data in configs:
         try:
             PileTypeConfiguration.objects.create(**config_data)
@@ -126,7 +126,7 @@ def project(db):
 @pytest.fixture
 def type_i_config(db):
     """Create Type I pile configuration.
-    
+
     Type I - Driven Cast In-Situ with standard reinforcement:
     - TOP: 16mm dia, 10 bars
     - BOTTOM: 16mm dia, 10 bars
@@ -160,7 +160,7 @@ def type_i_config(db):
 @pytest.fixture
 def type_ii_config(db):
     """Create Type II pile configuration (from TECON Excel).
-    
+
     Type II - Driven Cast In-Situ with full reinforcement:
     - TOP: 25mm dia, 10 bars
     - BOTTOM: 16mm dia, 10 bars
@@ -200,7 +200,7 @@ def type_ii_config(db):
 @pytest.fixture
 def type_iii_config(db):
     """Create Type III pile configuration.
-    
+
     Type III - Driven Cast In-Situ with enhanced reinforcement:
     - TOP: 28mm dia, 5 bars + 25mm dia, 5 bars
     - BOTTOM: 20mm dia, 5 bars + 16mm dia, 5 bars

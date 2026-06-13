@@ -297,7 +297,7 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
             }
             original = data["pile_type"]
             data["pile_type"] = pile_type_map.get(original.upper().strip(), original)
-        
+
         # Coerce numeric strings to integers for numeric fields
         numeric_fields = ["diameter_mm", "design_length_m", "actual_length_m"]
         for field in numeric_fields:
@@ -311,30 +311,28 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
                         data[field] = val
                 except (ValueError, TypeError):
                     pass  # Let the field validator handle the error
-        
+
         # Coerce project ID to integer if it's a string (from CSV)
         if "project" in data and isinstance(data["project"], str):
             try:
                 data["project"] = int(data["project"])
             except (ValueError, TypeError):
                 pass  # Let the field validator handle the error
-        
+
         return super().to_internal_value(data)
 
     def validate_pile_type(self, value):
-        """Validate pile_type is a valid choice 
+        """Validate pile_type is a valid choice
         (normalization done in to_internal_value)."""
         if not value:
             raise serializers.ValidationError("Pile type is required.")
-        
+
         valid_choices = [choice[0] for choice in Pile.PILE_TYPE_CHOICES]
         if value not in valid_choices:
             raise serializers.ValidationError(
                 f'"{value}" is not a valid choice. Valid choices are: {
-                    ", ".join(
-                        valid_choices
-                        )
-                        }'
+                    ", ".join(valid_choices)
+                }'
             )
         return value
 
@@ -346,7 +344,7 @@ class PileCreateUpdateSerializer(serializers.ModelSerializer):
 
         # Map BORED to TYPE_I for configuration lookup
         config_pile_type = "TYPE_I" if pile_type == "BORED" else pile_type
-        
+
         # Validate pile type configuration exists
         if not PileTypeConfiguration.objects.filter(
             pile_type=config_pile_type,

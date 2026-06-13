@@ -122,4 +122,3 @@ class ApprovalActionLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.action} for version {self.execution_record_version_id}"
-

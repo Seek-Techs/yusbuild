@@ -22,17 +22,31 @@
 
 # DATABASES["default"]["PASSWORD"] = "test-password"
 
-import os
+# import os
 
-# Set test env BEFORE importing base settings
-os.environ["DEBUG"] = "True"
-os.environ["DJANGO_SECRET_KEY"] = "django-test-secret-key"
-os.environ["POSTGRES_PASSWORD"] = "test-password"
+# # Set test env BEFORE importing base settings
+# os.environ["DEBUG"] = "True"
+# os.environ["DJANGO_SECRET_KEY"] = "django-test-secret-key"
+# os.environ["POSTGRES_PASSWORD"] = "test-password"
 
+# from .settings import *
+
+# DEBUG = True
+
+# DATABASES["default"]["PASSWORD"] = "test-password"
+
+# AUTH_PASSWORD_VALIDATORS = []
+
+
+import dj_database_url
 from .settings import *
 
 DEBUG = True
-
-DATABASES["default"]["PASSWORD"] = "test-password"
-
+SECRET_KEY = "django-test-secret-key"
 AUTH_PASSWORD_VALIDATORS = []
+
+DATABASES = {
+    "default": dj_database_url.config(
+        default="postgres://yusbuild:yusbuild@127.0.0.1:5432/yusbuild", conn_max_age=600
+    )
+}

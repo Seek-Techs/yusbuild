@@ -59,7 +59,7 @@ def run_verification_checks(execution_record_version: ExecutionRecordVersion):
     for check in RULE_CHECKS:
         flags.extend(check(context))
     flags = sorted(flags, key=lambda flag: (flag.category, flag.rule_code, flag.id))
-    
+
     if flags:
         record_timeline_event(
             None,
@@ -81,9 +81,8 @@ def run_verification_checks(execution_record_version: ExecutionRecordVersion):
                 "flag_count": len(flags),
             },
         )
-    
-    return flags
 
+    return flags
 
 
 def _transition_flag(flag: VarianceFlag, actor, *, status: str, comment: str = ""):
