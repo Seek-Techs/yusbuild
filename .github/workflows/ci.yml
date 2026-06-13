@@ -41,6 +41,8 @@ jobs:
 
       - name: Clear pip cache
         run: pip cache purge
+      - name: Clear Ruff cache
+        run: ruff clean
 
       - name: Install pip dependencies
         run: |
