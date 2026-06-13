@@ -48,17 +48,17 @@ jobs:
       - name: Install pip dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff==0.15.12
-          pip install -r requirements.txt
+          python -m pip install ruff==0.15.12
+          python -m pip install -r requirements.txt
 
       - name: Clear Ruff cache
-        run: ruff clean-cache
+        run: python -m ruff clean-cache
 
       - name: Lint with Ruff
-        run: ruff check .
+        run: python -m ruff check .
 
       - name: Check formatting with Ruff
-        run: ruff format --check .
+        run: python -m ruff format --check .
 
       - name: Wait for Postgres
         run: |
