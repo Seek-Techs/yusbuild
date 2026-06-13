@@ -20,7 +20,6 @@ from apps.piles.serializers import (
     PileTypeConfigurationSerializer,
 )
 from apps.piles.services import calculate_and_persist_pile
-from apps.common.permissions import IsAdminEngineerOrReadOnly
 
 logger = logging.getLogger(__name__)
 
