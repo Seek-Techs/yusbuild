@@ -54,6 +54,13 @@ jobs:
             echo "Waiting for postgres..."
             sleep 2
           done
+      - name: Print DATABASE_URL
+        run: echo "DATABASE_URL=$DATABASE_URL"
+
+      - name: Test Postgres connection
+        run: |
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=yusbuild psql -h 127.0.0.1 -p 5432 -U yusbuild -d yusbuild -c "SELECT 1;"
       - name: Run migrations
         run: python manage.py migrate --noinput
       - name: Check for missing migrations
