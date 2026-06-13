@@ -52,7 +52,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Clear Ruff cache
-        run: python -m ruff clean-cache
+        run: python -m ruff clean
 
       - name: Lint with Ruff
         run: python -m ruff check .
