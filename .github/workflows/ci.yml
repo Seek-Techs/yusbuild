@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches: [ main, develop ]
@@ -37,7 +38,9 @@ jobs:
           python-version: '3.12'
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev postgresql-client
 
       - name: Clear pip cache
         run: pip cache purge
@@ -49,16 +52,13 @@ jobs:
           pip install --no-cache-dir ruff==0.15.12
 
       - name: Clear Ruff cache
-        run: ruff clean
+        run: ruff clean-cache
 
       - name: Lint with Ruff
         run: ruff check .
 
       - name: Check formatting with Ruff
         run: ruff format --check .
-
-      - name: Install postgresql-client
-        run: sudo apt-get install -y postgresql-client
 
       - name: Wait for Postgres
         run: |
@@ -71,8 +71,10 @@ jobs:
         run: echo "DATABASE_URL=$DATABASE_URL"
 
       - name: Test Postgres connection
+        env:
+          PGPASSWORD: yusbuild
         run: |
-          PGPASSWORD=yusbuild psql -h 127.0.0.1 -p 5432 -U yusbuild -d yusbuild -c "SELECT 1;"
+          psql -h 127.0.0.1 -p 5432 -U yusbuild -d yusbuild -c "SELECT 1;"
 
       - name: Run migrations
         run: python manage.py migrate --noinput
@@ -94,5 +96,6 @@ jobs:
     needs: test-lint-migrate
     steps:
       - uses: actions/checkout@v4.2.2
+      
       - name: Build Docker image
         run: docker build -t yusbuild:ci .
