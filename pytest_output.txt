@@ -1,0 +1,92 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.3, pluggy-1.6.0
+django: version: 5.0.14, settings: config.test_settings (from ini)
+rootdir: C:\Users\Admin\Documents\Python project\2026\yusbuild
+configfile: pytest.ini
+testpaths: tests
+plugins: Faker-40.15.0, cov-7.1.0, django-4.12.0
+collected 68 items
+
+tests\test_api.py ............................................           [ 64%]
+tests\test_calculations.py ................FF..                          [ 94%]
+tests\test_import_export_stabilization.py ....                           [100%]
+
+================================== FAILURES ===================================
+_________________ TestFullCalculation.test_type_ii_pile_21_2 __________________
+tests\test_calculations.py:252: in test_type_ii_pile_21_2
+    assert abs(result.main_bars_kg - 585.831) < 1.0
+E   AssertionError: assert 271.2701097410603 < 1.0
+E    +  where 271.2701097410603 = abs((857.1011097410603 - 585.831))
+E    +    where 857.1011097410603 = PileCalculationResult(pile_no='P-001', pile_type='TYPE_II', diameter_mm=500, design_length_m=20.0, actual_length_m=21....me_m3=3.9274999999999998, actual_volume_m3=4.16315), design_concrete_m3=3.9274999999999998, actual_concrete_m3=4.16315).main_bars_kg
+---------------------------- Captured stderr call -----------------------------
+[INFO] Calculating pile P-001 (type=TYPE_II, design=20.0m, actual=21.2m)
+[INFO] Pile P-001 calculated: steel=933.73 kg, concrete=4.1631 m3
+_________________ TestFullCalculation.test_type_ii_pile_21_1 __________________
+tests\test_calculations.py:267: in test_type_ii_pile_21_1
+    assert abs(result.main_bars_kg - 585.831) < 1.0
+E   AssertionError: assert 271.2701097410603 < 1.0
+E    +  where 271.2701097410603 = abs((857.1011097410603 - 585.831))
+E    +    where 857.1011097410603 = PileCalculationResult(pile_no='P-002', pile_type='TYPE_II', diameter_mm=500, design_length_m=20.0, actual_length_m=21....3=3.9274999999999998, actual_volume_m3=4.1435125), design_concrete_m3=3.9274999999999998, actual_concrete_m3=4.1435125).main_bars_kg
+---------------------------- Captured stderr call -----------------------------
+[INFO] Calculating pile P-002 (type=TYPE_II, design=20.0m, actual=21.1m)
+[INFO] Pile P-002 calculated: steel=933.73 kg, concrete=4.1435 m3
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.5-final-0 _______________
+
+Name                                                                                 Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------------------------------------------------
+apps\__init__.py                                                                         0      0   100%
+apps\common\__init__.py                                                                  0      0   100%
+apps\common\middleware.py                                                               12      0   100%
+apps\common\permissions.py                                                              35      6    83%   26, 29, 42, 45, 49, 60
+apps\common\views.py                                                                    24      6    75%   28-30, 35-37
+apps\piles\__init__.py                                                                   0      0   100%
+apps\piles\admin.py                                                                     24      0   100%
+apps\piles\apps.py                                                                       5      0   100%
+apps\piles\calculations.py                                                             130      0   100%
+apps\piles\exceptions.py                                                                23      3    87%   56, 62-63
+apps\piles\importers.py                                                                 37      5    86%   22, 24, 43-44, 58
+apps\piles\management\__init__.py                                                        0      0   100%
+apps\piles\management\commands\__init__.py                                               0      0   100%
+apps\piles\management\commands\seed_pile_types.py                                       19     19     0%   10-129
+apps\piles\migrations\0001_initial.py                                                    7      0   100%
+apps\piles\migrations\0002_pile_unique_project_pile.py                                   4      0   100%
+apps\piles\migrations\0003_alter_pile_unique_together.py                                 4      0   100%
+apps\piles\migrations\0004_piletypeconfiguration_version_pilecalculationhistory.py       6      0   100%
+apps\piles\migrations\__init__.py                                                        0      0   100%
+apps\piles\models.py                                                                    97      4    96%   115, 214, 273, 340
+apps\piles\serializers.py                                                              203     52    74%   54-108, 137, 198, 206-207, 216, 319-320, 327, 331, 350, 367, 372, 423, 502-512, 525-532
+apps\piles\services.py                                                                  24      1    96%   20
+apps\piles\urls.py                                                                       7      0   100%
+apps\piles\views.py                                                                    171     16    91%   174, 240-250, 274-284, 303-304, 324
+apps\projects\__init__.py                                                                0      0   100%
+apps\projects\admin.py                                                                  12      0   100%
+apps\projects\apps.py                                                                    5      0   100%
+apps\projects\migrations\0001_initial.py                                                 6      0   100%
+apps\projects\migrations\0002_projectmembership_and_more.py                              6      0   100%
+apps\projects\migrations\__init__.py                                                     0      0   100%
+apps\projects\models.py                                                                 54      2    96%   71, 139
+apps\projects\serializers.py                                                            33      0   100%
+apps\projects\urls.py                                                                    6      0   100%
+apps\projects\views.py                                                                 103      7    93%   42, 252-254, 297-298, 305
+config\__init__.py                                                                       0      0   100%
+config\asgi.py                                                                           4      4     0%   5-11
+config\settings.py                                                                      48     12    75%   22-25, 102-114
+config\test_settings.py                                                                  8      0   100%
+config\urls.py                                                                           6      0   100%
+config\wsgi.py                                                                           4      4     0%   5-11
+debug_bulk.py                                                                           29     29     0%   1-62
+manage.py                                                                               11     11     0%   4-23
+tests\__init__.py                                                                        0      0   100%
+tests\conftest.py                                                                       36      4    89%   108-110, 135-158
+tests\test_api.py                                                                      385     24    94%   212-215, 219-223, 228-251, 255-279
+tests\test_calculations.py                                                             115      7    94%   253-256, 268-272
+tests\test_import_export_stabilization.py                                               45      0   100%
+------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                                 1748    216    88%
+Coverage HTML written to dir htmlcov
+Required test coverage of 85% reached. Total coverage: 87.64%
+=========================== short test summary info ===========================
+FAILED tests/test_calculations.py::TestFullCalculation::test_type_ii_pile_21_2
+FAILED tests/test_calculations.py::TestFullCalculation::test_type_ii_pile_21_1
+=================== 2 failed, 66 passed in 91.21s (0:01:31) ===================

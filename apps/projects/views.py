@@ -37,6 +37,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return projects with aggregate BOQ totals precomputed."""
+        # Guard against swagger introspection
+        if getattr(self, "swagger_fake_view", False):
+            return Project.objects.none()
+
         queryset = Project.objects.annotate(
             total_piles_count=Count("piles", distinct=True),
             total_steel_kg_sum=Sum("piles__calculation__total_steel_kg"),
@@ -204,21 +208,27 @@ class ProjectViewSet(viewsets.ModelViewSet):
             steel_distribution = {
                 "main_bars": {
                     "kg": round(main_bars_kg, 2),
-                    "percentage": round(main_bars_kg / total_steel_kg * 100, 1)
-                    if total_steel_kg > 0
-                    else 0,
+                    "percentage": (
+                        round(main_bars_kg / total_steel_kg * 100, 1)
+                        if total_steel_kg > 0
+                        else 0
+                    ),
                 },
                 "helix": {
                     "kg": round(helix_kg, 2),
-                    "percentage": round(helix_kg / total_steel_kg * 100, 1)
-                    if total_steel_kg > 0
-                    else 0,
+                    "percentage": (
+                        round(helix_kg / total_steel_kg * 100, 1)
+                        if total_steel_kg > 0
+                        else 0
+                    ),
                 },
                 "stiffeners": {
                     "kg": round(stiffeners_kg, 2),
-                    "percentage": round(stiffeners_kg / total_steel_kg * 100, 1)
-                    if total_steel_kg > 0
-                    else 0,
+                    "percentage": (
+                        round(stiffeners_kg / total_steel_kg * 100, 1)
+                        if total_steel_kg > 0
+                        else 0
+                    ),
                 },
             }
 
@@ -282,8 +292,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
         for pile in piles:
             calc = getattr(pile, "calculation", None)
-            if not calc:
-                continue
+            if calc is None:
+                try:
+                    calc, _, _ = calculate_and_persist_pile(
+                        pile,
+                        triggered_by=request.user,
+                        trigger=PileCalculationHistory.TRIGGER_BOQ_REPAIR,
+                        reason="Missing calculation repaired during BOQ CSV export",
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "Unable to repair missing calculation for pile %s: %s",
+                        pile.pile_no,
+                        str(exc),
+                    )
+
+            if calc is None:
+                (
+                    steel_kg,
+                    steel_tons,
+                    concrete_m3,
+                    main_bars_kg,
+                    helix_kg,
+                    stiffeners_kg,
+                ) = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            else:
+                steel_kg = round(calc.total_steel_kg, 2)
+                steel_tons = round(calc.total_steel_kg / 1000, 2)
+                concrete_m3 = round(calc.actual_concrete_m3, 4)
+                main_bars_kg = round(calc.main_bars_kg, 2)
+                helix_kg = round(calc.helix_kg, 2)
+                stiffeners_kg = round(calc.stiffeners_kg, 2)
+
             writer.writerow(
                 [
                     pile.pile_no,
@@ -291,12 +331,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     pile.diameter_mm,
                     pile.design_length_m,
                     pile.actual_length_m,
-                    round(calc.total_steel_kg, 2),
-                    round(calc.total_steel_kg / 1000, 2),
-                    round(calc.actual_concrete_m3, 4),
-                    round(calc.main_bars_kg, 2),
-                    round(calc.helix_kg, 2),
-                    round(calc.stiffeners_kg, 2),
+                    steel_kg,
+                    steel_tons,
+                    concrete_m3,
+                    main_bars_kg,
+                    helix_kg,
+                    stiffeners_kg,
                 ]
             )
         return response
