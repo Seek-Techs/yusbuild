@@ -95,7 +95,7 @@ ASGI_APPLICATION = "config.asgi.application"
 # Database - PostgreSQL
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": os.getenv("POSTGRES_DB", "yusbuild"),
         "USER": os.getenv("POSTGRES_USER", "postgres" if DEBUG else ""),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres" if DEBUG else ""),
