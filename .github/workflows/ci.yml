@@ -46,6 +46,12 @@ jobs:
         run: ruff check .
       - name: Check formatting with Ruff
         run: ruff format --check .
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U yusbuild; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
       - name: Run migrations
         run: python manage.py migrate --noinput
       - name: Check for missing migrations
