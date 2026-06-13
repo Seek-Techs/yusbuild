@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/execution-records ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/execution-records ]
 
 jobs:
   test-lint-migrate:
