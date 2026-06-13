@@ -60,6 +60,7 @@ jobs:
       - name: Check formatting with Ruff
         run: python -m ruff format --check .
 
+      # ... keep the rest of your postgres, migration, and test steps exactly the same
       - name: Wait for Postgres
         run: |
           until pg_isready -h 127.0.0.1 -p 5432 -U yusbuild; do
