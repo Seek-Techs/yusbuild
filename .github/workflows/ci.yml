@@ -29,10 +29,10 @@ jobs:
       DATABASE_URL: postgres://yusbuild:yusbuild@127.0.0.1:5432/yusbuild
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.5.0
         with:
           python-version: '3.12'
 
