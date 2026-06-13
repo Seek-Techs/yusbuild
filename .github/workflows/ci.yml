@@ -47,8 +47,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install --no-cache-dir ruff==0.15.12
+
       - name: Clear Ruff cache
         run: ruff clean
+
       - name: Lint with Ruff
         run: ruff check .
 
@@ -91,6 +93,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-lint-migrate
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: Build Docker image
         run: docker build -t yusbuild:ci .
