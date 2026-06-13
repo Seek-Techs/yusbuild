@@ -214,6 +214,8 @@ class CertifiedQuantity(models.Model):
     class Meta:
         db_table = "certified_quantities"
         ordering = ["certified_at", "id"]
+        verbose_name = "Certified Quantity"
+        verbose_name_plural = "Certified Quantities"
         indexes = [
             models.Index(fields=["package", "pile"]),
             models.Index(fields=["source_execution_version"]),
