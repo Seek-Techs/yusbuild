@@ -37,6 +37,10 @@
 
 # AUTH_PASSWORD_VALIDATORS = []
 
+import os
+
+os.environ["DEBUG"] = "True"
+os.environ.setdefault("DJANGO_SECRET_KEY", "django-test-secret-key")
 
 import dj_database_url
 from .settings import *
@@ -45,8 +49,16 @@ DEBUG = True
 SECRET_KEY = "django-test-secret-key"
 AUTH_PASSWORD_VALIDATORS = []
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default="postgres://yusbuild:yusbuild@127.0.0.1:5432/yusbuild", conn_max_age=600
-    )
-}
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+
+if TEST_DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(TEST_DATABASE_URL, conn_max_age=0),
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test.sqlite3",
+        }
+    }
