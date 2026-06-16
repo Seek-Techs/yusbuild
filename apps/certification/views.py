@@ -8,6 +8,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
 from apps.certification.models import CertificationPackage
+from apps.certification.selectors import visible_certification_packages_queryset
+
 from apps.certification.serializers import (
     CertificationLineCreateSerializer,
     CertificationLineSerializer,
@@ -39,28 +41,9 @@ class CertificationPackageViewSet(viewsets.ModelViewSet):
         if getattr(self, "swagger_fake_view", False):
             return CertificationPackage.objects.none()
 
-        queryset = (
-            CertificationPackage.objects.select_related(
-                "project",
-                "created_by",
-                "submitted_by",
-                "approved_by",
-                "certified_by",
-            )
-            .prefetch_related(
-                "lines",
-                "lines__pile",
-                "lines__certified_quantity",
-                "certified_quantities",
-                "certified_quantities__pile",
-            )
-            .all()
-        )
-        user = self.request.user
-        user_groups = set(user.groups.values_list("name", flat=True))
-        if user.is_superuser or "admin" in user_groups:
-            return queryset
-        return queryset.filter(project__memberships__user=user).distinct()
+        queryset = visible_certification_packages_queryset(self.request.user)
+        return queryset.all()
+
 
     def _conflict(self, exc):
         return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)

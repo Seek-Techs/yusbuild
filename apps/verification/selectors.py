@@ -6,7 +6,12 @@ from typing import TYPE_CHECKING, Iterable
 from django.db.models import Exists, OuterRef, QuerySet
 
 from apps.projects.models import Project, ProjectMembership
-from apps.verification.models import VarianceActionLog, VarianceFlag
+from apps.verification.models import VerificationActionLog, VarianceFlag
+
+
+# Backwards compatibility: older code referenced this as VarianceActionLog
+VarianceActionLog = VerificationActionLog
+
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser

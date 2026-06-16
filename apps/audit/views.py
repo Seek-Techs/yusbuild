@@ -10,6 +10,8 @@ from apps.audit.services.timeline_service import (
     get_pile_timeline,
     get_project_timeline,
 )
+from apps.audit.selectors import visible_timeline_events_queryset
+
 
 
 class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
@@ -22,11 +24,8 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return TimelineEvent.objects.none()
-        return TimelineEvent.objects.select_related(
-            "actor",
-            "project",
-            "pile",
-        ).all()
+        return visible_timeline_events_queryset(self.request.user)
+
 
     @action(
         detail=False,

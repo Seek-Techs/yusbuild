@@ -6,6 +6,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
 from apps.execution.models import PileDrivingRecord
+from apps.execution.selectors import visible_pile_driving_records_queryset
+
 from apps.execution.serializers import PileDrivingRecordSerializer
 from apps.execution.services.revision_service import create_revision_from_record
 from apps.execution.services.state_machine import InvalidExecutionTransition
@@ -54,22 +56,16 @@ class PileDrivingRecordViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return PileDrivingRecord.objects.none()
-        queryset = (
-            PileDrivingRecord.objects.select_related(
-                "project",
-                "pile",
-                "execution_record",
+        queryset = visible_pile_driving_records_queryset(self.request.user)
+        return (
+            queryset.select_related(
                 "execution_record__latest_version",
                 "execution_record__latest_version__submitted_by",
             )
             .prefetch_related("resistance_logs")
             .all()
         )
-        user = self.request.user
-        user_groups = set(user.groups.values_list("name", flat=True))
-        if user.is_superuser or "admin" in user_groups:
-            return queryset
-        return queryset.filter(project__memberships__user=user).distinct()
+
 
     def perform_create(self, serializer):
         self.instance = create_draft_driving_record(

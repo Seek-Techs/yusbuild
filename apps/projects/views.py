@@ -43,21 +43,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if getattr(self, "swagger_fake_view", False):
             return Project.objects.none()
 
-        queryset = Project.objects.annotate(
+        visible_qs = visible_projects_queryset(self.request.user)
+        return Project.objects.filter(pk__in=visible_qs.values_list("pk", flat=True)).annotate(
             total_piles_count=Count("piles", distinct=True),
             total_steel_kg_sum=Sum("piles__calculation__total_steel_kg"),
             total_concrete_m3_sum=Sum("piles__calculation__actual_concrete_m3"),
         ).order_by("-created_at", "id")
 
-        user_queryset = visible_projects_queryset(self.request.user)
-        return queryset.filter(pk__in=user_queryset.values_list("pk", flat=True))
+
+
 
 
 
         if self.action == "retrieve":
-            queryset = queryset.prefetch_related("piles__calculation")
+            return self.get_queryset().prefetch_related("piles__calculation")
 
-        return queryset
+        return self.get_queryset()
+
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:

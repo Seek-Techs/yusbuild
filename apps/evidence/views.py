@@ -6,6 +6,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.evidence.models import EvidenceItem
+from apps.evidence.selectors import visible_evidence_items_queryset
+
 from apps.evidence.serializers import (
     EvidenceItemSerializer,
     EvidenceLinkRequestSerializer,
@@ -44,17 +46,14 @@ class EvidenceItemViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return EvidenceItem.objects.none()
-        queryset = EvidenceItem.objects.select_related(
-            "project",
-            "uploaded_by",
-            "verified_by",
-        ).filter(is_deleted=False)
+        queryset = visible_evidence_items_queryset(self.request.user)
         pile_id = self.request.query_params.get("pile")
         if pile_id:
             queryset = queryset.filter(
                 links__execution_record_version__execution_record__pile_id=pile_id,
             )
         return queryset.distinct()
+
 
     @action(
         detail=False,

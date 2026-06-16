@@ -66,7 +66,11 @@ class RunVerificationChecksAPIView(APIView):
         )
 
 
+from apps.verification.selectors import visible_variance_flags_queryset
+
+
 class VarianceFlagViewSet(viewsets.ReadOnlyModelViewSet):
+
     serializer_class = VarianceFlagSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = [
@@ -81,12 +85,16 @@ class VarianceFlagViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return VarianceFlag.objects.none()
-        return VarianceFlag.objects.select_related(
-            "project",
-            "pile",
-            "execution_record_version",
-            "resolved_by",
-        ).prefetch_related("action_logs")
+        return (
+            visible_variance_flags_queryset(self.request.user)
+            .select_related(
+                "pile",
+                "execution_record_version",
+                "resolved_by",
+            )
+            .prefetch_related("action_logs")
+        )
+
 
     def _transition(self, request, service_func):
         flag = self.get_object()
