@@ -14,6 +14,8 @@ from rest_framework.response import Response
 from apps.piles.models import PileCalculationHistory
 from apps.piles.services import calculate_and_persist_pile
 from apps.projects.models import Project, ProjectMembership
+from apps.projects.selectors import visible_projects_queryset
+
 from apps.projects.serializers import (
     ProjectCreateUpdateSerializer,
     ProjectDetailSerializer,
@@ -47,10 +49,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             total_concrete_m3_sum=Sum("piles__calculation__actual_concrete_m3"),
         ).order_by("-created_at", "id")
 
-        user = self.request.user
-        user_groups = set(user.groups.values_list("name", flat=True))
-        if not user.is_superuser and "admin" not in user_groups:
-            queryset = queryset.filter(memberships__user=user).distinct()
+        user_queryset = visible_projects_queryset(self.request.user)
+        return queryset.filter(pk__in=user_queryset.values_list("pk", flat=True))
+
+
 
         if self.action == "retrieve":
             queryset = queryset.prefetch_related("piles__calculation")
