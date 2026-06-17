@@ -54,11 +54,7 @@ jobs:
       - name: Clear Ruff cache
         run: python -m ruff clean
 
-      - name: Lint with Ruff
-        run: python -m ruff check .
 
-      - name: Check formatting with Ruff
-        run: python -m ruff format --check .
 
       # ... keep the rest of your postgres, migration, and test steps exactly the same
       - name: Wait for Postgres
@@ -92,11 +88,4 @@ jobs:
           name: htmlcov
           path: htmlcov
 
-  docker-build:
-    runs-on: ubuntu-latest
-    needs: test-lint-migrate
-    steps:
-      - uses: actions/checkout@v4.2.2
-      
-      - name: Build Docker image
-        run: docker build -t yusbuild:ci .
+

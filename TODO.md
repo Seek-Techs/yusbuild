@@ -1,8 +1,15 @@
-- [ ] Analyze current ViewSets for direct queryset usage.
-- [x] Wire ProjectViewSet queryset to selector-based project scoping (visible_projects_queryset) while preserving current annotations/ordering.
-- [ ] Replace any direct Project.objects access used for visibility with selector-based access.
+# TODO
 
-- [ ] Ensure swagger_fake_view behavior preserved.
-- [ ] Run py_compile on modified files.
-- [ ] Run pytest (targeted) to ensure APIs unchanged.
+## Step plan approval required
+- [x] Inspect remaining orchestration layers (views/serializers/selectors/permissions)
+- [x] Cross-check URL routing + endpoints
+- [ ] Generate documentation set (README.md, ARCHITECTURE.md, ROADMAP.md, DOMAINS.md, API_GUIDE.md, TESTING.md, DEPLOYMENT.md) strictly from verified facts
+
+## Progress
+- [x] Identified base permission class: IsAdminEngineerOrReadOnly
+- [x] Verified project/pile/execution/evidence/audit/certification/verification selectors enforce query scoping by project membership
+- [x] Verified endpoints in views + key serializers + actions
+- [x] Verified URL routing for projects/piles/execution/evidence/verification/certification/audit/approvals
+- [x] Confirmed OpenAPI generation via drf-spectacular and existing tests/CI
+
 

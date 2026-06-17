@@ -1,0 +1,18 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ main, develop, feature/execution-records ]
+  pull_request:
+    branches: [ main, develop, feature/execution-records ]
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Build Docker image
+        run: docker build -t yusbuild:ci .
+

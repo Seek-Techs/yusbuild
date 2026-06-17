@@ -11,9 +11,10 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.piles.models import PileCalculationHistory
-from apps.piles.services import calculate_and_persist_pile
 from apps.projects.models import Project, ProjectMembership
+from apps.projects.services.project_boq_service import generate_boq
+
+
 from apps.projects.selectors import visible_projects_queryset
 
 from apps.projects.serializers import (
@@ -44,22 +45,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Project.objects.none()
 
         visible_qs = visible_projects_queryset(self.request.user)
-        return Project.objects.filter(pk__in=visible_qs.values_list("pk", flat=True)).annotate(
+        queryset = Project.objects.filter(
+            pk__in=visible_qs.values_list("pk", flat=True)
+        ).annotate(
             total_piles_count=Count("piles", distinct=True),
             total_steel_kg_sum=Sum("piles__calculation__total_steel_kg"),
             total_concrete_m3_sum=Sum("piles__calculation__actual_concrete_m3"),
-        ).order_by("-created_at", "id")
-
-
-
-
-
-
+        )
         if self.action == "retrieve":
-            return self.get_queryset().prefetch_related("piles__calculation")
-
-        return self.get_queryset()
-
+            return queryset.order_by("-created_at", "id").prefetch_related(
+                "piles__calculation"
+            )
+        return queryset.order_by("-created_at", "id")
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
@@ -123,141 +120,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     }
                 )
 
-            # Group by pile type
-            type_summary = {}
-            pile_details = []
+            from apps.projects.services.project_boq_service import generate_boq
 
-            for pile in piles:
-                calc = getattr(pile, "calculation", None)
-                if calc is None:
-                    logger.warning(
-                        "Pile %s has no calculation record; recalculating before BOQ",
-                        pile.pile_no,
-                    )
-                    calc, _, _ = calculate_and_persist_pile(
-                        pile,
-                        triggered_by=request.user,
-                        trigger=PileCalculationHistory.TRIGGER_BOQ_REPAIR,
-                        reason="Missing calculation repaired during BOQ generation",
-                    )
-
-                ptype = pile.pile_type
-
-                # Aggregate by type
-                if ptype not in type_summary:
-                    type_summary[ptype] = {
-                        "pile_type": ptype,
-                        "count": 0,
-                        "total_steel_kg": 0.0,
-                        "total_steel_tons": 0.0,
-                        "total_concrete_m3": 0.0,
-                    }
-
-                type_summary[ptype]["count"] += 1
-                type_summary[ptype]["total_steel_kg"] += calc.total_steel_kg
-                type_summary[ptype]["total_concrete_m3"] += calc.actual_concrete_m3
-
-                # Pile detail
-                pile_details.append(
-                    {
-                        "pile_no": pile.pile_no,
-                        "pile_type": ptype,
-                        "diameter_mm": pile.diameter_mm,
-                        "design_length_m": pile.design_length_m,
-                        "actual_length_m": pile.actual_length_m,
-                        "steel_kg": round(calc.total_steel_kg, 2),
-                        "steel_tons": round(calc.total_steel_kg / 1000, 2),
-                        "concrete_m3": round(calc.actual_concrete_m3, 4),
-                        "breakdown": {
-                            "main_bars_kg": round(calc.main_bars_kg, 2),
-                            "helix_kg": round(calc.helix_kg, 2),
-                            "stiffeners_kg": round(calc.stiffeners_kg, 2),
-                        },
-                    }
-                )
-
-            # Calculate tons for summary
-            for ts in type_summary.values():
-                ts["total_steel_tons"] = round(ts["total_steel_kg"] / 1000, 2)
-                ts["total_steel_kg"] = round(ts["total_steel_kg"], 2)
-                ts["total_concrete_m3"] = round(ts["total_concrete_m3"], 4)
-
-            # Grand totals
-            total_steel_kg = sum(item["steel_kg"] for item in pile_details)
-            total_concrete_m3 = sum(item["concrete_m3"] for item in pile_details)
-
-            grand_totals = {
-                "total_piles": len(pile_details),
-                "total_steel_kg": round(total_steel_kg, 2),
-                "total_steel_tons": round(total_steel_kg / 1000, 2),
-                "total_concrete_m3": round(total_concrete_m3, 4),
-            }
-
-            # Steel distribution percentages
-            main_bars_kg = sum(
-                pile.calculation.main_bars_kg
-                for pile in piles
-                if getattr(pile, "calculation", None) is not None
-            )
-            helix_kg = sum(
-                pile.calculation.helix_kg
-                for pile in piles
-                if getattr(pile, "calculation", None) is not None
-            )
-            stiffeners_kg = sum(
-                pile.calculation.stiffeners_kg
-                for pile in piles
-                if getattr(pile, "calculation", None) is not None
-            )
-            steel_distribution = {
-                "main_bars": {
-                    "kg": round(main_bars_kg, 2),
-                    "percentage": (
-                        round(main_bars_kg / total_steel_kg * 100, 1)
-                        if total_steel_kg > 0
-                        else 0
-                    ),
-                },
-                "helix": {
-                    "kg": round(helix_kg, 2),
-                    "percentage": (
-                        round(helix_kg / total_steel_kg * 100, 1)
-                        if total_steel_kg > 0
-                        else 0
-                    ),
-                },
-                "stiffeners": {
-                    "kg": round(stiffeners_kg, 2),
-                    "percentage": (
-                        round(stiffeners_kg / total_steel_kg * 100, 1)
-                        if total_steel_kg > 0
-                        else 0
-                    ),
-                },
-            }
-
-            logger.info(
-                "BOQ generated for project %s: %s piles, %.2f kg steel",
-                project.name,
-                len(piles),
-                grand_totals["total_steel_kg"],
-            )
-
-            return Response(
-                {
-                    "project": {
-                        "id": project.id,
-                        "name": project.name,
-                        "location": project.location,
-                        "client": project.client,
-                        "status": project.status,
-                    },
-                    "summary_by_type": list(type_summary.values()),
-                    "steel_distribution": steel_distribution,
-                    "piles": pile_details,
-                    "grand_totals": grand_totals,
-                }
-            )
+            payload = generate_boq(project, actor=request.user)
+            return Response(payload)
 
         except Exception as exc:
             logger.error("BOQ generation failed: %s", str(exc), exc_info=True)

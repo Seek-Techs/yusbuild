@@ -1,0 +1,35 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, develop, feature/execution-records ]
+  pull_request:
+    branches: [ main, develop, feature/execution-records ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.5.0
+        with:
+          python-version: '3.12'
+
+      - name: Install pip dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff==0.15.12
+          python -m pip install -r requirements.txt
+
+      - name: Clear Ruff cache
+        run: python -m ruff clean
+
+      - name: Lint with Ruff
+        run: python -m ruff check .
+
+      - name: Check formatting with Ruff
+        run: python -m ruff format --check .
+

@@ -167,6 +167,12 @@ docker compose exec web pytest tests/test_calculations.py -v
 docker compose exec web pytest --cov=apps --cov-report=term-missing
 ```
 
+## API Schema & Docs
+- OpenAPI schema: `GET /api/schema/`
+- Swagger UI: `GET /api/docs/`
+- Redoc: `GET /api/redoc/`
+
+
 ## Project Structure
 
 ```
