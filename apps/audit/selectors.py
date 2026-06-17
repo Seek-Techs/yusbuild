@@ -80,4 +80,3 @@ def visible_projects_queryset(user: AbstractBaseUser) -> QuerySet[Project]:
     return base_qs.annotate(_has_membership=Exists(membership_qs)).filter(
         _has_membership=True
     )
-

@@ -89,4 +89,3 @@ def visible_certification_packages_by_project_roles(
         project__memberships__user=user,
         project__memberships__role__in=roles_set,
     ).distinct()
-

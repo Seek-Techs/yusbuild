@@ -69,14 +69,15 @@ def visible_projects_queryset(user: AbstractBaseUser) -> QuerySet[Project]:
         user=user,
     )
 
-    return qs.annotate(_has_membership=Exists(membership_qs)).filter(_has_membership=True)
+    return qs.annotate(_has_membership=Exists(membership_qs)).filter(
+        _has_membership=True
+    )
 
 
 def visible_project_ids(user: AbstractBaseUser) -> QuerySet:
     """Convenience selector returning IDs for visible projects."""
 
     return visible_projects_queryset(user).values_list("id", flat=True)
-
 
 
 def visible_projects_for_user_and_membership_role(
@@ -99,10 +100,9 @@ def visible_projects_for_user_and_membership_role(
     if ctx.can_see_all_projects:
         return Project.objects.all()
 
-    return (
-        Project.objects.filter(memberships__user=user, memberships__role__in=roles_set)
-        .distinct()
-    )
+    return Project.objects.filter(
+        memberships__user=user, memberships__role__in=roles_set
+    ).distinct()
 
 
 def visible_project_memberships_queryset(
@@ -132,4 +132,3 @@ def get_user_project_membership(
         return None
 
     return ProjectMembership.objects.filter(project=project, user=user).first()
-

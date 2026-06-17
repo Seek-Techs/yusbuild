@@ -14,6 +14,8 @@ from rest_framework.views import APIView
 
 from apps.execution.models import ExecutionRecordVersion
 from apps.verification.models import VarianceFlag
+from apps.verification.selectors import visible_variance_flags_queryset
+
 from apps.verification.serializers import (
     RunVerificationChecksResponseSerializer,
     VarianceFlagSerializer,
@@ -66,11 +68,7 @@ class RunVerificationChecksAPIView(APIView):
         )
 
 
-from apps.verification.selectors import visible_variance_flags_queryset
-
-
 class VarianceFlagViewSet(viewsets.ReadOnlyModelViewSet):
-
     serializer_class = VarianceFlagSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = [
@@ -94,7 +92,6 @@ class VarianceFlagViewSet(viewsets.ReadOnlyModelViewSet):
             )
             .prefetch_related("action_logs")
         )
-
 
     def _transition(self, request, service_func):
         flag = self.get_object()

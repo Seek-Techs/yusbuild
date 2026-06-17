@@ -88,9 +88,7 @@ def visible_execution_record_versions_queryset(
     if ctx.can_see_all_projects:
         return queryset
 
-    return queryset.filter(
-        execution_record__project__memberships__user=user
-    ).distinct()
+    return queryset.filter(execution_record__project__memberships__user=user).distinct()
 
 
 def visible_pile_driving_records_queryset(
@@ -142,4 +140,3 @@ def visible_projects_for_membership_roles(
         memberships__user=user,
         memberships__role__in=roles_set,
     ).distinct()
-

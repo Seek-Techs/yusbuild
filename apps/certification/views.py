@@ -44,7 +44,6 @@ class CertificationPackageViewSet(viewsets.ModelViewSet):
         queryset = visible_certification_packages_queryset(self.request.user)
         return queryset.all()
 
-
     def _conflict(self, exc):
         return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
 

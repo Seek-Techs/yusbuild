@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 
 
-def visible_<entity>_queryset(user) -> QuerySet:
+def visible_entity_queryset(user) -> QuerySet: 
     """Return a visibility-scoped queryset for `<entity>`.
 
     This function must apply the repository's visibility rules (project membership).

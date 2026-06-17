@@ -6,13 +6,16 @@ import csv
 import logging
 
 from django.db.models import Count, Sum
+
+from apps.piles.models import PileCalculationHistory
+from apps.piles.services import calculate_and_persist_pile
+
 from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.projects.models import Project, ProjectMembership
-from apps.projects.services.project_boq_service import generate_boq
 
 
 from apps.projects.selectors import visible_projects_queryset
@@ -123,6 +126,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             from apps.projects.services.project_boq_service import generate_boq
 
             payload = generate_boq(project, actor=request.user)
+
             return Response(payload)
 
         except Exception as exc:

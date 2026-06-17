@@ -54,7 +54,6 @@ class EvidenceItemViewSet(viewsets.ReadOnlyModelViewSet):
             )
         return queryset.distinct()
 
-
     @action(
         detail=False,
         methods=["post"],

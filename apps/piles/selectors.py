@@ -90,13 +90,14 @@ def visible_piles_by_project_roles(
 
     roles_set = set(roles)
 
-    return (
-        Pile.objects.filter(project__memberships__user=user, project__memberships__role__in=roles_set)
-        .distinct()
-    )
+    return Pile.objects.filter(
+        project__memberships__user=user, project__memberships__role__in=roles_set
+    ).distinct()
 
 
-def visible_pile_history_queryset(user: AbstractBaseUser) -> QuerySet[PileCalculationHistory]:
+def visible_pile_history_queryset(
+    user: AbstractBaseUser,
+) -> QuerySet[PileCalculationHistory]:
     """Calculation history entries for visible piles."""
 
     ctx = _get_visibility_context(user)
@@ -136,4 +137,3 @@ def get_user_pile_membership_role(
     if membership is None:
         return None
     return membership.role
-

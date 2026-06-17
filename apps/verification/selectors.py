@@ -81,12 +81,10 @@ def visible_variance_flags_by_project_roles(
 
     roles_set = set(roles)
 
-    return (
-        VarianceFlag.objects.filter(
-            project__memberships__user=user,
-            project__memberships__role__in=roles_set,
-        ).distinct()
-    )
+    return VarianceFlag.objects.filter(
+        project__memberships__user=user,
+        project__memberships__role__in=roles_set,
+    ).distinct()
 
 
 def visible_variance_action_logs_queryset(
@@ -104,4 +102,3 @@ def visible_variance_action_logs_queryset(
         return queryset
 
     return queryset.filter(variance_flag__project__memberships__user=user).distinct()
-

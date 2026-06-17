@@ -23,7 +23,6 @@ from apps.piles.services import calculate_and_persist_pile
 from apps.piles.selectors import visible_piles_queryset
 
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -199,8 +198,6 @@ class PileViewSet(viewsets.ModelViewSet):
         """Return piles visible to the authenticated user."""
         return visible_piles_queryset(self.request.user)
 
-
-
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
             return PileCreateUpdateSerializer
@@ -350,4 +347,3 @@ class PileTypeConfigurationViewSet(viewsets.ReadOnlyModelViewSet):
         if pile_type:
             queryset = queryset.filter(pile_type=pile_type)
         return queryset
-

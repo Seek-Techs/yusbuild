@@ -75,7 +75,6 @@ def visible_evidence_item_ids(user: AbstractBaseUser) -> QuerySet:
     return visible_evidence_items_queryset(user).values_list("id", flat=True)
 
 
-
 def visible_evidence_items_by_project_roles(
     user: AbstractBaseUser,
     roles: Iterable[str],
@@ -92,7 +91,9 @@ def visible_evidence_items_by_project_roles(
     return (
         EvidenceItem.objects.select_related("project", "uploaded_by", "verified_by")
         .filter(is_deleted=False)
-        .filter(project__memberships__user=user, project__memberships__role__in=roles_set)
+        .filter(
+            project__memberships__user=user, project__memberships__role__in=roles_set
+        )
         .distinct()
     )
 
@@ -111,7 +112,4 @@ def visible_evidence_links_queryset(user: AbstractBaseUser) -> QuerySet[Evidence
     if ctx.can_see_all_projects:
         return queryset
 
-    return queryset.filter(
-        evidence__project__memberships__user=user
-    ).distinct()
-
+    return queryset.filter(evidence__project__memberships__user=user).distinct()

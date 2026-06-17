@@ -66,7 +66,6 @@ class PileDrivingRecordViewSet(viewsets.ModelViewSet):
             .all()
         )
 
-
     def perform_create(self, serializer):
         self.instance = create_draft_driving_record(
             serializer.validated_data,

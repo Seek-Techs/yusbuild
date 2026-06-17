@@ -13,7 +13,6 @@ from apps.audit.services.timeline_service import (
 from apps.audit.selectors import visible_timeline_events_queryset
 
 
-
 class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TimelineEventSerializer
     filter_backends = [DjangoFilterBackend]
@@ -25,7 +24,6 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
         if getattr(self, "swagger_fake_view", False):
             return TimelineEvent.objects.none()
         return visible_timeline_events_queryset(self.request.user)
-
 
     @action(
         detail=False,
