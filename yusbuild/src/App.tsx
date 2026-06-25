@@ -1,13 +1,7 @@
-import { AppShell } from "@/layouts";
+import { AppRouter } from "@/routes";
 
 function App() {
-  return (
-    <AppShell>
-      <div className="rounded-2xl border border-border bg-card p-8 text-center text-xl font-semibold text-foreground">
-        YusBuild Frontend
-      </div>
-    </AppShell>
-  );
+  return <AppRouter />;
 }
 
 export default App;
