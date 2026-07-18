@@ -1,5 +1,15 @@
 import { Link } from "react-router-dom";
-import { Activity, ArrowRight, ClipboardCheck, Layers3, Table2 } from "lucide-react";
+import {
+  Activity,
+  ArrowRight,
+  ClipboardCheck,
+  Cylinder,
+  FolderKanban,
+  Layers3,
+  ListChecks,
+  Table2,
+  Weight,
+} from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatKg, formatM3, piles, projects } from "@/features/prototype/data";
+import { DashboardCharts } from "@/features/dashboard/components/DashboardCharts";
 
 const stats = [
   {
@@ -76,7 +87,8 @@ export function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card className="rounded-md">
-          <CardHeader className="p-4">
+          <CardHeader className="flex flex-row items-center gap-2 p-4">
+            <FolderKanban className="h-4 w-4 text-muted-foreground" />
             <CardTitle className="text-base">Active project packages</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-4 pt-0">
@@ -96,7 +108,9 @@ export function DashboardPage() {
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-3 text-right text-sm">
-                  <span>{project.piles} piles</span>
+                  <span>
+                    {project.piles > 0 ? `${project.piles} piles` : "No piles imported"}
+                  </span>
                   <span>{formatKg(project.steelKg)}</span>
                   <span>{formatM3(project.concreteM3)}</span>
                 </div>
@@ -106,7 +120,8 @@ export function DashboardPage() {
         </Card>
 
         <Card className="rounded-md">
-          <CardHeader className="p-4">
+          <CardHeader className="flex flex-row items-center gap-2 p-4">
+            <ListChecks className="h-4 w-4 text-muted-foreground" />
             <CardTitle className="text-base">Review queue</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-4 pt-0">
@@ -134,16 +149,24 @@ export function DashboardPage() {
 
       <Card className="rounded-md">
         <CardContent className="grid gap-4 p-4 sm:grid-cols-2">
-          <div>
-            <p className="text-sm text-muted-foreground">Total reinforcement steel</p>
-            <p className="text-xl font-semibold">{formatKg(totalSteel)}</p>
+          <div className="flex items-start gap-3">
+            <Weight className="mt-1 h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground">Total reinforcement steel</p>
+              <p className="text-xl font-semibold">{formatKg(totalSteel)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total concrete volume</p>
-            <p className="text-xl font-semibold">{formatM3(totalConcrete)}</p>
+          <div className="flex items-start gap-3">
+            <Cylinder className="mt-1 h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground">Total concrete volume</p>
+              <p className="text-xl font-semibold">{formatM3(totalConcrete)}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <DashboardCharts />
     </div>
   );
 }

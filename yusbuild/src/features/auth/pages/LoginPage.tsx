@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/shared/Logo";
+import { Footer } from "@/layouts/Footer";
 import { useAuth } from "@/hooks/useAuth";
 
 export function LoginPage() {
@@ -35,10 +37,7 @@ export function LoginPage() {
   return (
     <div className="grid min-h-screen bg-muted/30 lg:grid-cols-[1fr_460px]">
       <section className="hidden border-r bg-background p-10 lg:flex lg:flex-col lg:justify-between">
-        <div>
-          <p className="text-lg font-semibold">YusBuild</p>
-          <p className="text-sm text-muted-foreground">Reinforcement quantity control</p>
-        </div>
+        <Logo withText />
         <div className="max-w-xl space-y-4">
           <p className="text-sm font-semibold uppercase tracking-wider text-accent">
             Engineering workflow
@@ -51,9 +50,12 @@ export function LoginPage() {
             prepare auditable exports for site and commercial teams.
           </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Built for engineering review, quantity assurance, and certification.
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Built for engineering review, quantity assurance, and certification.
+          </p>
+          <Footer />
+        </div>
       </section>
 
       <main className="flex items-center justify-center p-4">

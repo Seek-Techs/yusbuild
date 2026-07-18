@@ -27,8 +27,8 @@ function RoadmapPage({ title }: { title: string }) {
     <div className="rounded-md border bg-card p-6">
       <h1 className="mb-2 text-2xl font-semibold">{title}</h1>
       <p className="text-sm text-muted-foreground">
-        This workflow area will be enabled as execution, evidence, verification,
-        approvals, certification, and audit modules are connected.
+        This module is on the YusBuild roadmap and will be available in an
+        upcoming release.
       </p>
     </div>
   </AppShell>

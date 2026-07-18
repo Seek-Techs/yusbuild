@@ -71,6 +71,11 @@ export function ProjectDetailPage() {
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Piles</p>
             <p className="text-xl font-semibold">{project.piles}</p>
+            {project.piles === 0 ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                No pile schedule has been imported yet.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
         <Card className="rounded-md">
