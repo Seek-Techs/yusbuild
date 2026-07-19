@@ -51,7 +51,7 @@ export function AuthProvider({
    * 6. Subsequent API calls will include Authorization header
    */
   const login = React.useCallback(
-    async (_email: string): Promise<void> => {
+    async (_email: string, _password: string): Promise<void> => {
       setIsLoading(true);
       try {
         // PLACEHOLDER: Simulate async operation
@@ -62,14 +62,18 @@ export function AuthProvider({
         // setUser(response.data.user)
         
         await new Promise((resolve) => setTimeout(resolve, 500));
+
+        if (!_email || !_password) {
+          throw new Error("Email and password are required.");
+        }
         
         // Mock user for development
         const mockUser: User = {
           id: "user-1",
           email: _email,
           name: _email.split("@")[0],
-          roles: ["engineer"],
-          groups: ["engineers"],
+          roles: _email.toLowerCase().includes("viewer") ? ["viewer"] : ["engineer"],
+          groups: _email.toLowerCase().includes("viewer") ? ["viewer"] : ["engineer"],
         };
         
         setUser(mockUser);

@@ -1,67 +1,39 @@
-/**
- * Router configuration and route exports
- * 
- * Defines application routes and route-level component exports.
- * Integrates AuthProvider for all routes.
- * 
- * Current status:
- * - Phase 4: Authentication infrastructure only
- * - Routes are placeholders for future feature modules
- * - No business logic (workflows, dashboards, forms) implemented yet
- * 
- * Future phases will add:
- * - Phase 5: Projects feature
- * - Phase 6: Piles feature
- * - Phase 7-10: Execution, Evidence, Verification, Approvals, Certification, Audit
- */
-
 import * as React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AppShell } from "@/layouts";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
+import { ProjectBoqPage } from "@/features/projects/pages/ProjectBoqPage";
+import { ProjectDetailPage } from "@/features/projects/pages/ProjectDetailPage";
+import { NewProjectPage } from "@/features/projects/pages/NewProjectPage";
+import { ProjectsPage } from "@/features/projects/pages/ProjectsPage";
+import { PileDetailPage } from "@/features/piles/pages/PileDetailPage";
+import { NewPilePage } from "@/features/piles/pages/NewPilePage";
+import { PilesPage } from "@/features/piles/pages/PilesPage";
 
-/**
- * Login page placeholder
- * 
- * FUTURE IMPLEMENTATION:
- * - Extract to pages/auth/LoginPage.tsx
- * - Implement login form with react-hook-form
- * - Call login() from AuthProvider
- * - Navigate to dashboard on success
- */
-const LoginPage: React.FC = () => (
-  <div className="flex min-h-screen items-center justify-center bg-background">
-    <div className="w-full max-w-md rounded-lg border border-border bg-card p-8">
-      <h1 className="mb-6 text-2xl font-bold text-foreground">Login</h1>
-      <p className="text-sm text-muted-foreground">
-        Authentication page placeholder. Use useAuth() hook in LoginPage
-        component to call login() method.
-      </p>
-    </div>
-  </div>
-);
+function ProtectedShell({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <AppShell>{children}</AppShell>
+    </ProtectedRoute>
+  );
+}
 
-/**
- * Dashboard page placeholder
- * 
- * FUTURE IMPLEMENTATION:
- * - Extract to pages/dashboard/DashboardPage.tsx
- * - Implement role-aware dashboard layout
- * - Display project/pile/workflow summaries per domain
- * - Navigation to domain feature modules
- */
-const DashboardPage: React.FC = () => (
+function RoadmapPage({ title }: { title: string }) {
+  return (
   <AppShell>
-    <div className="rounded-2xl border border-border bg-card p-8 text-center">
-      <h1 className="mb-2 text-2xl font-bold text-foreground">Dashboard</h1>
+    <div className="rounded-md border bg-card p-6">
+      <h1 className="mb-2 text-2xl font-semibold">{title}</h1>
       <p className="text-sm text-muted-foreground">
-        Protected route rendering successfully. Auth boundary enforced by
-        ProtectedRoute wrapper.
+        This module is on the YusBuild roadmap and will be available in an
+        upcoming release.
       </p>
     </div>
   </AppShell>
-);
+  );
+}
 
 /**
  * Router component
@@ -82,40 +54,56 @@ export const AppRouter: React.FC = () => (
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Protected routes */}
         <Route
           path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
+          element={<ProtectedShell><DashboardPage /></ProtectedShell>}
         />
-
-        {/* Feature routes (placeholder for future domains) */}
-        {/* Phase 5: Projects */}
-        {/* <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} /> */}
-
-        {/* Phase 6: Piles */}
-        {/* <Route path="/piles" element={<ProtectedRoute><PilesPage /></ProtectedRoute>} /> */}
-
-        {/* Phase 7: Execution */}
-        {/* <Route path="/execution" element={<ProtectedRoute><ExecutionPage /></ProtectedRoute>} /> */}
-
-        {/* Phase 8: Evidence */}
-        {/* <Route path="/evidence" element={<ProtectedRoute><EvidencePage /></ProtectedRoute>} /> */}
-
-        {/* Phase 9: Verification */}
-        {/* <Route path="/verification" element={<ProtectedRoute><VerificationPage /></ProtectedRoute>} /> */}
-
-        {/* Phase 10: Approvals */}
-        {/* <Route path="/approvals" element={<ProtectedRoute><ApprovalsPage /></ProtectedRoute>} /> */}
-
-        {/* Phase 11: Certification */}
-        {/* <Route path="/certification" element={<ProtectedRoute><CertificationPage /></ProtectedRoute>} /> */}
-
-        {/* Phase 12: Audit */}
-        {/* <Route path="/audit" element={<ProtectedRoute><AuditPage /></ProtectedRoute>} /> */}
+        <Route path="/projects" element={<ProtectedShell><ProjectsPage /></ProtectedShell>} />
+        <Route
+          path="/projects/new"
+          element={<ProtectedShell><NewProjectPage /></ProtectedShell>}
+        />
+        <Route
+          path="/projects/:projectId"
+          element={<ProtectedShell><ProjectDetailPage /></ProtectedShell>}
+        />
+        <Route
+          path="/projects/:projectId/boq"
+          element={<ProtectedShell><ProjectBoqPage /></ProtectedShell>}
+        />
+        <Route path="/piles" element={<ProtectedShell><PilesPage /></ProtectedShell>} />
+        <Route
+          path="/piles/new"
+          element={<ProtectedShell><NewPilePage /></ProtectedShell>}
+        />
+        <Route
+          path="/piles/:pileId"
+          element={<ProtectedShell><PileDetailPage /></ProtectedShell>}
+        />
+        <Route
+          path="/execution"
+          element={<ProtectedRoute><RoadmapPage title="Execution" /></ProtectedRoute>}
+        />
+        <Route
+          path="/evidence"
+          element={<ProtectedRoute><RoadmapPage title="Evidence" /></ProtectedRoute>}
+        />
+        <Route
+          path="/verification"
+          element={<ProtectedRoute><RoadmapPage title="Verification" /></ProtectedRoute>}
+        />
+        <Route
+          path="/approvals"
+          element={<ProtectedRoute><RoadmapPage title="Approvals" /></ProtectedRoute>}
+        />
+        <Route
+          path="/certification"
+          element={<ProtectedRoute><RoadmapPage title="Certification" /></ProtectedRoute>}
+        />
+        <Route
+          path="/audit"
+          element={<ProtectedRoute><RoadmapPage title="Audit" /></ProtectedRoute>}
+        />
 
         {/* Default route - redirect to dashboard if authenticated, else to login */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

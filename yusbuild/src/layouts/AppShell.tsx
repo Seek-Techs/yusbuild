@@ -3,6 +3,7 @@ import * as React from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { ContentLayout } from "./ContentLayout";
+import { Footer } from "./Footer";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -17,6 +18,10 @@ export function AppShell({ children }: AppShellProps) {
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           <Sidebar />
           <ContentLayout>{children}</ContentLayout>
+        </div>
+
+        <div className="border-t px-4 py-3 sm:px-6 lg:px-8">
+          <Footer />
         </div>
       </div>
     </div>
