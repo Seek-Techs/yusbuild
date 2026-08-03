@@ -8,6 +8,8 @@ import {
 
 import { AppShell } from "@/layouts";
 import { Toaster } from "@/components/ui/sonner";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
+
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useTheme } from "@/hooks/useTheme";
 import { AuthProvider } from "@/providers/AuthProvider";
@@ -50,12 +52,17 @@ function ThemedToaster() {
  */
 function RouterShell({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <TooltipProvider delayDuration={300}>
-        <ThemedToaster />
-        {children}
-      </TooltipProvider>
-    </AuthProvider>
+    // NuqsAdapter must sit inside the router: it reads and writes the query
+    // string through react-router's own history, so URL state stays in step
+    // with navigation instead of fighting it.
+    <NuqsAdapter>
+      <AuthProvider>
+        <TooltipProvider delayDuration={300}>
+          <ThemedToaster />
+          {children}
+        </TooltipProvider>
+      </AuthProvider>
+    </NuqsAdapter>
   );
 }
 

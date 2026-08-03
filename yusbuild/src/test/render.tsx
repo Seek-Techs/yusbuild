@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 /**
  * The shared test renderer.
@@ -30,6 +31,12 @@ export interface RenderWithProvidersOptions extends Omit<
   routerEntries?: string[];
   /** Supply your own client to pre-seed the cache or assert on it. */
   queryClient?: QueryClient;
+  /**
+   * Observe URL writes made through nuqs. Assert on
+   * `onUrlUpdate.mock.calls[0][0].queryString` — the testing adapter owns the
+   * query string, so `location.search` from react-router will not reflect it.
+   */
+  onUrlUpdate?: (event: { queryString: string }) => void;
   /**
    * Set false when the tree under test supplies its own router — e.g. a
    * `RouterProvider` built with `createMemoryRouter`, which is required to test
@@ -66,19 +73,36 @@ export function renderWithProviders(
     routerEntries,
     queryClient = createTestQueryClient(),
     withRouter = true,
+    onUrlUpdate,
     ...renderOptions
   } = options;
 
   const user = userEvent.setup();
   const entries = routerEntries ?? [route];
 
+  // nuqs ships a dedicated testing adapter that replaces the framework one and
+  // owns the query string itself, so URL state works without a real router.
+  // `searchParams` seeds it from the same `route` the MemoryRouter uses.
+  const initialSearch = entries[0]?.includes("?")
+    ? `?${entries[0].split("?")[1]}`
+    : "";
+
   function Wrapper({ children }: { children: React.ReactNode }) {
+    const withNuqs = (
+      <NuqsTestingAdapter
+        searchParams={initialSearch}
+        onUrlUpdate={onUrlUpdate}
+      >
+        {children}
+      </NuqsTestingAdapter>
+    );
+
     return (
       <QueryClientProvider client={queryClient}>
         {withRouter ? (
-          <MemoryRouter initialEntries={entries}>{children}</MemoryRouter>
+          <MemoryRouter initialEntries={entries}>{withNuqs}</MemoryRouter>
         ) : (
-          children
+          withNuqs
         )}
       </QueryClientProvider>
     );
