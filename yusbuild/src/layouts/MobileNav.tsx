@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Logo } from "@/components/shared/Logo";
+import { cn } from "@/lib/utils";
 import { NavList } from "./NavList";
 
 /**
@@ -22,7 +23,7 @@ import { NavList } from "./NavList";
  * Open state is deliberately local rather than in the UI store: it must not
  * persist across reloads, and only this component needs it.
  */
-export function MobileNav() {
+export function MobileNav({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false);
   const { pathname } = useLocation();
   const [lastPathname, setLastPathname] = React.useState(pathname);
@@ -43,7 +44,7 @@ export function MobileNav() {
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden"
+          className={cn("lg:hidden", className)}
           aria-label="Open navigation menu"
         >
           <Menu aria-hidden="true" />

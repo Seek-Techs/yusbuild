@@ -71,6 +71,32 @@ describe("design tokens", () => {
     );
   });
 
+  it("keeps the topbar navy in dark mode instead of inverting it", () => {
+    // The header is a fixed brand surface. Styling it with --primary looks
+    // right in light mode but inverts to near-white in dark, turning the navy
+    // header into a pale band — so it has its own token that stays dark.
+    const lightTopbar = lightness(token(":root", "topbar"));
+    const darkTopbar = lightness(token(".dark", "topbar"));
+
+    expect(lightTopbar).toBeLessThan(30);
+    expect(darkTopbar).toBeLessThan(30);
+
+    // --primary legitimately does invert; the topbar must not follow it.
+    expect(lightness(token(".dark", "primary"))).toBeGreaterThan(80);
+  });
+
+  it("uses a true green, not the brand teal, for the chart palette", () => {
+    // The client's donut and stat chips are green (hue ~142). --brand is teal
+    // (~166) and is deliberately a separate concern from the data palette.
+    const hue = (value: string) =>
+      Number.parseFloat(value.split(/\s+/)[0] ?? "0");
+
+    for (const scheme of [":root", ".dark"] as const) {
+      expect(hue(token(scheme, "chart-2"))).toBeGreaterThan(130);
+      expect(hue(token(scheme, "chart-2"))).toBeLessThan(155);
+    }
+  });
+
   it("defines every semantic token in both colour schemes", () => {
     for (const name of SEMANTIC_TOKENS) {
       for (const scheme of [":root", ".dark"] as const) {

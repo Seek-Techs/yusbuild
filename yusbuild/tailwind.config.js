@@ -125,6 +125,12 @@ export default {
           muted: "hsl(var(--destructive-muted))",
           "muted-foreground": "hsl(var(--destructive-muted-foreground))",
         },
+        // The app header. Its own token so it stays navy in both schemes —
+        // reusing `primary` would invert it to near-white in dark mode.
+        topbar: {
+          DEFAULT: "hsl(var(--topbar))",
+          foreground: "hsl(var(--topbar-foreground))",
+        },
         chart: {
           1: "hsl(var(--chart-1))",
           2: "hsl(var(--chart-2))",

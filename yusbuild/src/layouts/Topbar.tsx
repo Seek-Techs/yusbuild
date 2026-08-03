@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, User as UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Logo } from "@/components/shared/Logo";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,9 +24,18 @@ import { MobileNav } from "./MobileNav";
 /**
  * Application topbar.
  *
- * Sticky, which only works because the shell now scrolls at the document level
- * — the previous container-scroll model (`overflow-y-auto` on the content
- * pane) silently defeated `position: sticky`.
+ * Solid navy, per the client's design reference.
+ *
+ * Uses its own `--topbar` token rather than `--primary`: primary inverts to
+ * near-white in dark mode, which would turn the navy header into a pale band.
+ * The header is a fixed brand surface, so it stays navy in both schemes.
+ *
+ * Because it sits on a dark field regardless of scheme, every control inside
+ * needs explicit light-on-dark treatment — the default ghost button is styled
+ * for a light surface and its icon would all but disappear here.
+ *
+ * Sticky, which only works because the shell scrolls at the document level; a
+ * scroll container on the content pane silently defeats `position: sticky`.
  */
 export function Topbar() {
   const { logout, user } = useAuth();
@@ -32,26 +46,49 @@ export function Topbar() {
     navigate("/login", { replace: true });
   }
 
-  return (
-    <header className="sticky top-0 z-40 h-topbar border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <div className="flex h-full items-center gap-3 px-4 sm:px-6">
-        <MobileNav />
+  // Shared treatment for controls sitting on the navy field.
+  const onNavy =
+    "text-topbar-foreground/80 hover:bg-white/10 hover:text-topbar-foreground focus-visible:ring-white/50 focus-visible:ring-offset-topbar";
 
-        <Logo withText />
+  return (
+    <header className="sticky top-0 z-40 h-topbar bg-topbar text-topbar-foreground">
+      <div className="flex h-full items-center gap-3 px-4 sm:px-6">
+        <MobileNav className={onNavy} />
+
+        <Logo withText onDark />
 
         {/* Breadcrumbs render only for nested routes, and only where there is
             room for them. */}
-        <Breadcrumbs className="hidden md:block" />
+        <Breadcrumbs className="hidden md:block" onDark />
 
         <div className="ml-auto flex items-center gap-1">
-          <ThemeToggle />
+          {/* Notifications are on the roadmap. Rendered as a visible but inert
+              affordance rather than omitted, so the topbar matches the agreed
+              design without implying a feature that does not exist. */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-disabled="true"
+                onClick={(event) => event.preventDefault()}
+                aria-label="Notifications (coming soon)"
+                className={onNavy}
+              >
+                <Bell aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Notifications — coming soon</TooltipContent>
+          </Tooltip>
+
+          <ThemeToggle className={onNavy} />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className={`gap-2 ${onNavy}`}
                 aria-label="Account menu"
               >
                 <UserIcon aria-hidden="true" />

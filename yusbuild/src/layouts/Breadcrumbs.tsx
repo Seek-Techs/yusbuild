@@ -47,7 +47,14 @@ function hasCrumb(handle: unknown): handle is Required<RouteHandle> {
   );
 }
 
-export function Breadcrumbs({ className }: { className?: string }) {
+export function Breadcrumbs({
+  className,
+  onDark = false,
+}: {
+  className?: string;
+  /** Render for a dark surface, e.g. the navy topbar. */
+  onDark?: boolean;
+}) {
   const matches = useMatches();
 
   const crumbs = matches.flatMap((match) => {
@@ -61,7 +68,12 @@ export function Breadcrumbs({ className }: { className?: string }) {
 
   return (
     <nav aria-label="Breadcrumb" className={cn("min-w-0", className)}>
-      <ol className="flex items-center gap-1 text-caption text-muted-foreground">
+      <ol
+        className={cn(
+          "flex items-center gap-1 text-caption",
+          onDark ? "text-topbar-foreground/70" : "text-muted-foreground",
+        )}
+      >
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;
 
@@ -76,7 +88,11 @@ export function Breadcrumbs({ className }: { className?: string }) {
 
               {isLast || !crumb.to ? (
                 <span
-                  className={cn("truncate", isLast && "text-foreground")}
+                  className={cn(
+                    "truncate",
+                    isLast &&
+                      (onDark ? "text-topbar-foreground" : "text-foreground"),
+                  )}
                   aria-current={isLast ? "page" : undefined}
                 >
                   {crumb.label}
@@ -84,7 +100,12 @@ export function Breadcrumbs({ className }: { className?: string }) {
               ) : (
                 <Link
                   to={crumb.to}
-                  className="truncate rounded-sm hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(
+                    "truncate rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2",
+                    onDark
+                      ? "hover:text-topbar-foreground focus-visible:ring-white/50"
+                      : "hover:text-foreground focus-visible:ring-ring",
+                  )}
                 >
                   {crumb.label}
                 </Link>
