@@ -1,3 +1,10 @@
+/**
+ * Frozen prototype component. Superseded by EmptyState / ErrorState in
+ * @/components/shared, which distinguish their states by colour and icon and
+ * carry the correct ARIA. Kept only so the reference screens still compile.
+ *
+ * Do not use in new code.
+ */
 import { AlertTriangle, CheckCircle2, Lock, Loader2 } from "lucide-react";
 
 interface PrototypeStateProps {

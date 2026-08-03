@@ -1,9 +1,16 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup } from "@testing-library/react";
-import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, vi } from "vitest";
+import * as axeMatchers from "vitest-axe/matchers";
 
 import { server } from "./msw/server";
+
+// vitest-axe ships an `extend-expect` entry point, but it is empty in this
+// version — importing it registers nothing and every assertion fails with
+// "Invalid Chai property". Registering the matchers directly is the supported
+// path and does not depend on that file.
+expect.extend(axeMatchers);
 
 /**
  * Global test setup.
