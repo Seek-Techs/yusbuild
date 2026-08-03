@@ -74,6 +74,53 @@ export function formatMetres(value: NumberInput): string {
   return formatted === EMPTY_VALUE ? formatted : `${formatted} m`;
 }
 
+/**
+ * Locale for currency, deliberately pinned rather than left to the browser.
+ *
+ * Every other formatter here passes `undefined` so numbers and dates follow the
+ * reader's own locale — correct, since those are neutral quantities. Currency
+ * is different: with an undefined locale a browser set to en-IN renders
+ * ₦21,600,000 as "NGN 2.2Cr" (crore, with lakh grouping) rather than "₦21.6M",
+ * and drops the ₦ symbol entirely. Contract values must read the same to every
+ * user, so the locale is fixed.
+ */
+const CURRENCY_LOCALE = "en-NG";
+
+/**
+ * Currency, e.g. "₦21.6M" or "₦21,600,000".
+ *
+ * Defaults to Naira: YusBuild is a Nigerian construction platform and every
+ * cost figure in the product design is in ₦. Pass `currency` for anything else.
+ *
+ * `compact` is for headline figures on stat tiles, where "₦21.6M" reads far
+ * better than "₦21,600,000". Use the full form in tables, where the exact
+ * number is the point.
+ */
+export function formatCurrency(
+  value: NumberInput,
+  {
+    currency = "NGN",
+    compact = false,
+    locale = CURRENCY_LOCALE,
+    maximumFractionDigits = compact ? 1 : 0,
+  }: {
+    currency?: string;
+    compact?: boolean;
+    locale?: string;
+    maximumFractionDigits?: number;
+  } = {},
+): string {
+  const parsed = parse(value);
+  if (parsed === null) return EMPTY_VALUE;
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    notation: compact ? "compact" : "standard",
+    maximumFractionDigits,
+  }).format(parsed);
+}
+
 /** Percentage, e.g. "74%". Expects 0–100, not 0–1. */
 export function formatPercent(value: NumberInput): string {
   const formatted = formatNumber(value, { maximumFractionDigits: 1 });

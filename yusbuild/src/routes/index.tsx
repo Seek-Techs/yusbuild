@@ -16,6 +16,9 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { NotFoundPage } from "@/features/misc/pages/NotFoundPage";
 import { NAV_ITEMS } from "@/layouts/nav.config";
+// Aliased to a stub in production builds (see vite.config.ts), so the gallery
+// screens and fixtures are dropped from the shipped bundle.
+import { devRoutes } from "@/dev/routes";
 import { PublicOnlyRoute, ProtectedRoute } from "./ProtectedRoute";
 
 /**
@@ -120,6 +123,7 @@ const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
+          ...devRoutes,
           ...NAV_ITEMS.map((item): RouteObject => ({
             path: item.to,
             element: <RoadmapPage title={item.label} />,

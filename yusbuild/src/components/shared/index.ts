@@ -13,6 +13,7 @@
 // Page structure
 export { PageHeader, type PageHeaderProps } from "./PageHeader";
 export { Logo } from "./Logo";
+export { Media, MediaThumb, type MediaProps } from "./Media";
 export { ThemeToggle } from "./ThemeToggle";
 
 // Data display

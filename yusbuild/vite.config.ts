@@ -34,6 +34,13 @@ export default defineConfig(({ command, mode }) => {
                   "./src/_prototype/routes.stub.tsx",
                 ),
               },
+              {
+                find: /^@\/dev\/routes$/,
+                replacement: path.resolve(
+                  __dirname,
+                  "./src/dev/routes.stub.tsx",
+                ),
+              },
             ]
           : []),
         { find: "@", replacement: path.resolve(__dirname, "./src") },
