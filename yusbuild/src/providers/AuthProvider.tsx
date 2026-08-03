@@ -1,140 +1,184 @@
+import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+
+import { onAuthFailure, postLogin } from "@/lib/api/client";
+import { clearSession, getSession, startSession } from "@/lib/auth";
+import { decodeJwt } from "@/lib/auth/jwt";
+import { AuthContext } from "./AuthContext";
+import type { AuthContextType, User } from "@/types/auth";
+
 /**
- * AuthProvider - Authentication Context Provider
- * 
- * Manages application-wide authentication state using React Context.
- * Provides JWT token management and user session lifecycle.
- * 
- * PLACEHOLDER IMPLEMENTATION:
- * - No real API integration yet
- * - No actual token storage beyond memory
- * - login() and logout() are stubbed for architecture validation
- * - Token refresh is prepared but not implemented
- * 
- * Architecture:
- * - Owns: auth state, token management, user session
- * - Does NOT: make API calls, validate tokens, refresh automatically
- * - Uses: React Context for state distribution to child components
- * - Consumed by: ProtectedRoute, useAuth() hook
+ * Authentication provider.
+ *
+ * Owns session lifecycle: rehydrating a stored session on mount, logging in
+ * against the real backend, and clearing everything on logout or on a failed
+ * token refresh.
+ *
+ * Must be rendered INSIDE both the router and the QueryClientProvider:
+ *   - it calls useNavigate() to redirect when the refresh interceptor gives up
+ *   - it calls queryClient.clear() on logout, so cached project and pile data
+ *     from one session cannot leak into the next on a shared site tablet
  */
 
-import * as React from "react";
-import type {
-  User,
-  AuthContextType,
-} from "@/types/auth";
-import { AuthContext } from "./AuthContext";
+/**
+ * Build a User from an access token.
+ *
+ * `user_id` is the only identifying claim the backend issues. Roles default to
+ * empty, which makes RoleGate fail closed — see the TODO on `User.roles`.
+ */
+function userFromToken(accessToken: string, username: string): User | null {
+  const payload = decodeJwt(accessToken);
+  if (!payload || typeof payload.user_id !== "number") {
+    return null;
+  }
+
+  return {
+    id: payload.user_id,
+    username,
+    roles: [],
+  };
+}
+
+const USERNAME_STORAGE_KEY = "yusbuild_username";
+
+/**
+ * The backend returns no username, and the JWT carries no username claim, so
+ * the only way to show "who am I" in the topbar is to remember what was typed
+ * at login. This is display-only and carries no authority.
+ */
+function readStoredUsername(): string {
+  try {
+    return window.localStorage.getItem(USERNAME_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStoredUsername(username: string): void {
+  try {
+    window.localStorage.setItem(USERNAME_STORAGE_KEY, username);
+  } catch {
+    // Blocked storage — the session still works for this tab.
+  }
+}
+
+function clearStoredUsername(): void {
+  try {
+    window.localStorage.removeItem(USERNAME_STORAGE_KEY);
+  } catch {
+    // Nothing to do.
+  }
+}
+
+interface RestoredSession {
+  user: User | null;
+  accessToken: string | null;
+}
+
+/**
+ * Read any stored session. Runs during the first render, not in an effect —
+ * localStorage is synchronous, so there is no reason to show a loading state.
+ */
+function restoreSessionFromStorage(): RestoredSession {
+  const stored = getSession();
+  if (!stored.accessToken) {
+    return { user: null, accessToken: null };
+  }
+
+  const user = userFromToken(stored.accessToken, readStoredUsername());
+  if (!user) {
+    // A token we cannot read is not a session. Discard it.
+    clearSession();
+    clearStoredUsername();
+    return { user: null, accessToken: null };
+  }
+
+  return { user, accessToken: stored.accessToken };
+}
 
 export function AuthProvider({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  // Auth state
-  const [user, setUser] = React.useState<User | null>(null);
-  const [token, setToken] = React.useState<string | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Rehydrated synchronously during the first render rather than in an effect.
+  // localStorage is a synchronous API, so deferring it would create a frame
+  // where a valid session looks unauthenticated — which is exactly what made
+  // ProtectedRoute flash the login redirect on hard refresh.
+  const [session, setSession] = React.useState<RestoredSession>(
+    restoreSessionFromStorage,
+  );
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Derived state
-  const isAuthenticated = !!user && !!token;
+  const { user, accessToken } = session;
 
-  /**
-   * login - Authenticate user with credentials
-   * 
-   * PLACEHOLDER: Currently a no-op that demonstrates the interface.
-   * 
-   * Future implementation will:
-   * 1. Call POST /api/auth/token/ with email + password
-   * 2. Receive access + refresh tokens
-   * 3. Parse JWT to extract user data
-   * 4. Store tokens (memory + localStorage/sessionStorage)
-   * 5. Update auth state
-   * 6. Subsequent API calls will include Authorization header
-   */
+  const clearAuthState = React.useCallback(() => {
+    clearSession();
+    clearStoredUsername();
+    setSession({ user: null, accessToken: null });
+    // Drop every cached query so the next session starts clean.
+    queryClient.clear();
+  }, [queryClient]);
+
+  // The API client performs a single-flight refresh on 401. When that refresh
+  // ultimately fails, it notifies here so React state matches the cleared
+  // storage and the user lands back on /login.
+  React.useEffect(() => {
+    onAuthFailure(() => {
+      clearAuthState();
+      navigate("/login", { replace: true });
+    });
+
+    return () => onAuthFailure(null);
+  }, [clearAuthState, navigate]);
+
   const login = React.useCallback(
-    async (_email: string, _password: string): Promise<void> => {
+    async (username: string, password: string): Promise<void> => {
       setIsLoading(true);
       try {
-        // PLACEHOLDER: Simulate async operation
-        // In Phase 5 (API Integration), this will call:
-        // POST /api/auth/token/
-        // const response = await api.post("/api/auth/token/", { email, password })
-        // setToken(response.data.access)
-        // setUser(response.data.user)
-        
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const tokens = await postLogin(username, password);
+        startSession(tokens);
+        writeStoredUsername(username);
 
-        if (!_email || !_password) {
-          throw new Error("Email and password are required.");
+        const nextUser = userFromToken(tokens.access, username);
+        if (!nextUser) {
+          clearSession();
+          clearStoredUsername();
+          throw new Error(
+            "Sign-in succeeded but the session token was invalid.",
+          );
         }
-        
-        // Mock user for development
-        const mockUser: User = {
-          id: "user-1",
-          email: _email,
-          name: _email.split("@")[0],
-          roles: _email.toLowerCase().includes("viewer") ? ["viewer"] : ["engineer"],
-          groups: _email.toLowerCase().includes("viewer") ? ["viewer"] : ["engineer"],
-        };
-        
-        setUser(mockUser);
-        setToken("mock-jwt-token");
+
+        setSession({ user: nextUser, accessToken: tokens.access });
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
-  /**
-   * logout - Clear authentication state
-   * 
-   * PLACEHOLDER: Currently clears in-memory state only.
-   * 
-   * Future implementation will:
-   * 1. Call POST /api/auth/logout/ (optional, for server-side invalidation)
-   * 2. Clear token from storage
-   * 3. Clear user state
-   * 4. Redirect to login page (in route layer, not here)
-   */
   const logout = React.useCallback((): void => {
-    setUser(null);
-    setToken(null);
-    // PLACEHOLDER: In Phase 5, may call API to invalidate token server-side
-    // POST /api/auth/logout/
-  }, []);
+    // NOTE: SimpleJWT has no blacklist configured, so there is no server-side
+    // invalidation to call. The refresh token stays valid until it expires.
+    // Flagged as a security item in FRONTEND_PLATFORM.md.
+    clearAuthState();
+  }, [clearAuthState]);
 
-  /**
-   * refreshToken - Refresh JWT token
-   * 
-   * PLACEHOLDER: Currently a no-op.
-   * 
-   * Future implementation will:
-   * 1. Call POST /api/auth/token/refresh/ with refresh token
-   * 2. Receive new access token
-   * 3. Update in-memory + storage
-   * 4. Invoked automatically on 401 responses (in API client middleware)
-   * 5. Queued requests retry after refresh
-   */
-  const refreshToken = React.useCallback(async (): Promise<void> => {
-    // PLACEHOLDER: Implement in Phase 5
-    // const response = await api.post("/api/auth/token/refresh/", { refresh: token })
-    // setToken(response.data.access)
-  }, []);
-
-  // Context value
-  const value: AuthContextType = {
-    user,
-    isAuthenticated,
-    isLoading,
-    token,
-    login,
-    logout,
-    refreshToken,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+  const value = React.useMemo<AuthContextType>(
+    () => ({
+      user,
+      isAuthenticated: user !== null && accessToken !== null,
+      isLoading,
+      accessToken,
+      login,
+      logout,
+    }),
+    [user, accessToken, isLoading, login, logout],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
