@@ -1,0 +1,58 @@
+name: Frontend
+
+# Scoped to the frontend package so backend-only changes do not queue a
+# JavaScript build, and vice versa. The Django pipeline lives in ci.yml.
+on:
+  push:
+    paths:
+      - "yusbuild/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "yusbuild/**"
+      - ".github/workflows/frontend.yml"
+
+defaults:
+  run:
+    working-directory: yusbuild
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: yusbuild/pnpm-lock.yaml
+
+      # --frozen-lockfile fails if the lockfile is out of step with
+      # package.json, rather than silently resolving something different from
+      # what was tested locally.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Test
+        run: pnpm test
+
+      # Catches anything that only breaks in a production build — most notably
+      # the aliases that keep the prototype and the component gallery out of the
+      # shipped bundle.
+      - name: Build
+        run: pnpm build

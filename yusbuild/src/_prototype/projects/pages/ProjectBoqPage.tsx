@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Download, FileSpreadsheet } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PrototypeState } from "@/components/shared/PrototypeState";
+import { PrototypeState } from "../../PrototypeState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
