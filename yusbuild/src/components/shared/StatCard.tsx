@@ -18,10 +18,32 @@ import { cn } from "@/lib/utils";
  *   which is how the three variants appeared in the first place.
  */
 
+/**
+ * Two families, deliberately kept apart:
+ *
+ *   Semantic  — the value carries a judgement. `success` for healthy,
+ *               `warning` for needs-attention, `destructive` for a problem.
+ *   Decorative— blue/green/purple/orange, purely to tell tiles apart at a
+ *               glance. This is what the client's dashboard reference uses:
+ *               "Projects", "Total Piles" and "Total Steel" are not good or
+ *               bad, they are just different.
+ *
+ * Reaching for `success` when you only want a green chip is the mistake this
+ * split prevents — it tells the reader a number is healthy when nothing has
+ * been evaluated.
+ */
 export type StatTone =
-  "neutral" | "brand" | "success" | "warning" | "info" | "destructive";
+  | "neutral"
+  | "brand"
+  | "success"
+  | "warning"
+  | "info"
+  | "destructive"
+  | "blue"
+  | "green"
+  | "purple"
+  | "orange";
 
-/** Tinted icon chips, matching the dashboard tiles in the product design. */
 const TONE_CHIP: Record<StatTone, string> = {
   neutral: "bg-muted text-muted-foreground",
   brand: "bg-brand-muted text-brand-muted-foreground",
@@ -29,6 +51,11 @@ const TONE_CHIP: Record<StatTone, string> = {
   warning: "bg-warning-muted text-warning-muted-foreground",
   info: "bg-info-muted text-info-muted-foreground",
   destructive: "bg-destructive-muted text-destructive-muted-foreground",
+  // Decorative, drawn from the chart palette so a tile and its chart agree.
+  blue: "bg-chart-1/10 text-chart-1",
+  green: "bg-chart-2/10 text-chart-2",
+  purple: "bg-chart-3/10 text-chart-3",
+  orange: "bg-chart-4/10 text-chart-4",
 };
 
 export interface StatCardProps {

@@ -98,10 +98,33 @@ The `-muted` tints **invert between schemes** — pale (~95% lightness) in light
 mode, dark fills (~15%) in dark mode. Reusing the light values on a dark
 background would blow out.
 
+### App chrome
+
+`--topbar` / `--topbar-foreground` back the application header.
+
+The header has its own token rather than reusing `--primary` for a specific
+reason: `--primary` **inverts** between schemes (deep navy in light, near-white
+in dark) because that is what buttons need. A header styled with it looks
+correct in light mode and turns into a pale band in dark. `--topbar` stays navy
+in both, deepening slightly for dark rather than flipping.
+
+Anything rendered on the header needs explicit light-on-dark treatment — the
+default ghost button is styled for a light surface and its icon all but
+disappears there. `Logo`, `Breadcrumbs` and `ThemeToggle` take an `onDark`
+prop / className for this.
+
 ### Charts
 
 `--chart-1` … `--chart-5`, exposed as `chart.1`–`chart.5` (`fill-chart-1`,
 `text-chart-3`). Five distinct hues so adjacent donut slices stay separable.
+
+Sampled from the client's design reference, so the BOQ donut and the dashboard
+stat chips render the colours the client expects: blue, green, purple, orange,
+cyan.
+
+**`--chart-2` is a true green (hue ~142), not the brand teal (~166).** The brand
+accent and the data palette are deliberately separate concerns — `--brand`
+marks the product, the chart palette encodes data series. Do not collapse them.
 
 **Read these through `useChartTheme()`, never as module-scope constants.** A
 `const COLOR = "hsl(var(--chart-1))"` evaluated at import time will not update

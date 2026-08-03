@@ -73,11 +73,24 @@
     /* --- Charts -------------------------------------------------------- */
     /* Five distinct series. Read these through useChartTheme(), never as
      * module-scope constants — they change with the colour scheme. */
-    --chart-1: 221 83% 45%;
-    --chart-2: 166 76% 34%;
-    --chart-3: 262 72% 55%;
-    --chart-4: 25 95% 48%;
-    --chart-5: 199 89% 42%;
+    /* Sampled from the client's design reference (the BOQ donut and the
+     * dashboard stat chips), so charts render the colours the client expects.
+     * Note chart-2 is a true green, not the teal used for --brand: the brand
+     * accent and the data palette are deliberately separate. */
+    --chart-1: 221 83% 53%; /* blue   */
+    --chart-2: 142 76% 36%; /* green  */
+    --chart-3: 262 83% 58%; /* purple */
+    --chart-4: 25 95% 53%; /* orange */
+    --chart-5: 199 89% 48%; /* cyan   */
+
+    /* --- App chrome ----------------------------------------------------- */
+    /* The topbar is a fixed brand surface, not a themed one. It deliberately
+     * has its own tokens rather than reusing --primary: that flips to
+     * near-white in dark mode, which would invert the navy header into a pale
+     * band. Both schemes keep it navy; dark simply deepens it to sit correctly
+     * against the darker page. */
+    --topbar: 221 83% 18%;
+    --topbar-foreground: 210 40% 98%;
 
     /* --- Borders / focus ----------------------------------------------- */
     --border: 214.3 31.8% 91.4%;
@@ -137,11 +150,17 @@
     --destructive-muted: 0 50% 16%;
     --destructive-muted-foreground: 0 80% 78%;
 
-    --chart-1: 217 91% 62%;
-    --chart-2: 166 66% 48%;
-    --chart-3: 262 83% 68%;
-    --chart-4: 25 95% 58%;
-    --chart-5: 199 89% 55%;
+    /* Same hues as light, lifted so they hold against the dark field. */
+    --chart-1: 217 91% 62%; /* blue   */
+    --chart-2: 142 66% 50%; /* green  */
+    --chart-3: 262 83% 68%; /* purple */
+    --chart-4: 25 95% 58%; /* orange */
+    --chart-5: 199 89% 58%; /* cyan   */
+
+    /* Deepened, not inverted — the header stays a navy brand surface in both
+     * schemes. See the note on --topbar in :root. */
+    --topbar: 222 60% 11%;
+    --topbar-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;

@@ -6,6 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
 
 /**
@@ -15,7 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
  * is the common case, and the underlying preference still defaults to "system"
  * until the user expresses an opinion.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const label = isDark ? "Switch to light theme" : "Switch to dark theme";
@@ -28,7 +29,7 @@ export function ThemeToggle() {
           size="icon-sm"
           onClick={toggleTheme}
           aria-label={label}
-          className="text-muted-foreground"
+          className={cn("text-muted-foreground", className)}
         >
           {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
         </Button>
