@@ -19,9 +19,14 @@
     },
     "ignoreDeprecations": "6.0",
 
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Tests are typechecked by tsconfig.test.json, which adds Node globals.
+  // Keeping them out here means app code cannot accidentally use Node APIs.
+  "exclude": ["src/test", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

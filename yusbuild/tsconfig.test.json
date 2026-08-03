@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "noEmit": true,
+    // Tests may read fixture files and use __dirname, so they need Node
+    // globals. These are deliberately NOT added to tsconfig.app.json — app
+    // code must not reach for Node APIs.
+    "types": ["vite/client", "node", "vitest/globals"]
+  },
+  // `exclude` is inherited from tsconfig.app.json (which excludes tests), so it
+  // must be reset here or it cancels out the includes below.
+  "exclude": [],
+  "include": ["src/test/**/*", "src/**/*.test.ts", "src/**/*.test.tsx"]
+}

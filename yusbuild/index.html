@@ -4,7 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="YusBuild — pile reinforcement, quantification and BOQ management for construction projects."
+    />
     <title>YusBuild | Construction Foundation Management Platform</title>
+    <script>
+      // Applies the stored colour scheme before first paint. Without this,
+      // dark-mode users see a white flash on every load, because React has not
+      // mounted (and ThemeProvider has not run) until after the first frame.
+      // Kept inline and dependency-free so it is render-blocking by design.
+      (function () {
+        try {
+          var stored = localStorage.getItem("yusbuild-theme");
+          var dark =
+            stored === "dark" ||
+            ((!stored || stored === "system") &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) {
+            document.documentElement.classList.add("dark");
+          }
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch (error) {
+          // Blocked storage — fall through to the light default.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

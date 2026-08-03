@@ -1,78 +1,53 @@
 /**
- * ProtectedRoute - Authorization boundary for authenticated pages
- * 
- * Enforces authentication requirement for route access.
- * Implements React Router pattern for gated content.
- * 
- * Responsibilities:
- * - Check authentication state from AuthProvider
- * - Render component if authenticated
- * - Redirect to login if not authenticated
- * - Show loading state during auth check (if needed)
- * 
- * Architecture:
- * - Thin wrapper: only checks auth, does not implement business logic
- * - Owns: auth boundary enforcement only
- * - Does NOT: validate permissions beyond authentication
- * - Does NOT: implement role-based access control (future concern)
+ * Route guards.
+ *
+ * These handle authentication only. They do NOT do role-based authorization —
+ * that is `RoleGate` for affordances, and the backend for actual enforcement.
  */
 
 import * as React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+
 import { useAuth } from "@/hooks/useAuth";
 
 export interface ProtectedRouteProps {
-  children: React.ReactNode;
+  /**
+   * Optional. Omit to use this as a layout route rendering an <Outlet/>, which
+   * is how the app router uses it — that way the guard and the shell below it
+   * mount once rather than per route.
+   */
+  children?: React.ReactNode;
 }
 
-/**
- * ProtectedRoute component
- * 
- * Usage in router configuration:
- * ```
- * <Route
- *   path="/dashboard"
- *   element={
- *     <ProtectedRoute>
- *       <DashboardPage />
- *     </ProtectedRoute>
- *   }
- * />
- * ```
- * 
- * Flow:
- * 1. Read auth state from context
- * 2. If authenticated: render children
- * 3. If not authenticated: redirect to /login
- * 4. If loading: optionally show skeleton (not implemented - stretch goal)
- * 
- * Why not use Outlet pattern?
- * - Outlet requires nested route structure
- * - Wrapping allows flexibility in page composition
- * - Compatible with page-level component tree
- */
 export function ProtectedRoute({
   children,
 }: ProtectedRouteProps): React.ReactElement {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
-  // Unauthenticated: redirect to login
-  if (!isLoading && !isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  // No loading gate: AuthProvider restores any stored session synchronously
+  // during its first render, so this is already correct on a hard refresh.
+  if (!isAuthenticated) {
+    // `state.from` lets the login page return the user to where they were
+    // headed instead of dropping everyone on the dashboard.
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Loading: show placeholder (can be enhanced with skeleton in future)
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+  return <>{children ?? <Outlet />}</>;
+}
+
+/**
+ * Keeps signed-in users off the login page. Without this, a returning user who
+ * navigates to /login sees a sign-in form for a session they already have.
+ */
+export function PublicOnlyRoute({
+  children,
+}: ProtectedRouteProps): React.ReactElement {
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  // Authenticated: render children
-  return <>{children}</>;
+  return <>{children ?? <Outlet />}</>;
 }
