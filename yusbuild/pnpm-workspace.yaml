@@ -1,2 +1,12 @@
+# pnpm build-script approvals.
+#
+# pnpm will not run a dependency's install scripts until the choice is recorded,
+# and exits non-zero when it is missing — so this file must carry a real value,
+# not the "set this to true or false" placeholder pnpm writes for you. Locally
+# an approval cached in ~/.config/pnpm/rc masks that; CI has no such file, which
+# is why a missing decision fails there and not on a developer machine.
 allowBuilds:
-  msw: set this to true or false
+  # false: msw's postinstall only copies a browser service worker into public/.
+  # We use MSW in Node for tests and never in the browser, so the worker is dead
+  # weight. Flip to true if anyone starts mocking requests in the browser.
+  msw: false
