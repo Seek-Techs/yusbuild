@@ -1,10 +1,9 @@
 import * as React from "react";
-import * as LabelPrimitive from "@radix-ui/react-label";
+import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import {
   Controller,
   FormProvider,
-  useFormContext,
   type ControllerProps,
   type FieldPath,
   type FieldValues,
@@ -13,19 +12,13 @@ import {
 import { cn } from "@/lib/utils";
 
 import { Label } from "./label";
+import {
+  FormFieldContext,
+  FormItemContext,
+  useFormField,
+} from "./form-context";
 
 const Form = FormProvider;
-
-type FormFieldContextValue<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> = {
-  name: TName;
-};
-
-const FormFieldContext = React.createContext<FormFieldContextValue>(
-  {} as FormFieldContextValue,
-);
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -39,37 +32,6 @@ const FormField = <
     </FormFieldContext.Provider>
   );
 };
-
-const useFormField = () => {
-  const fieldContext = React.useContext(FormFieldContext);
-  const itemContext = React.useContext(FormItemContext);
-  const { getFieldState, formState } = useFormContext();
-
-  const fieldState = getFieldState(fieldContext.name, formState);
-
-  if (!fieldContext.name) {
-    throw new Error("useFormField should be used within <FormField>");
-  }
-
-  const { id } = itemContext;
-
-  return {
-    id,
-    name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
-    ...fieldState,
-  };
-};
-
-type FormItemContextValue = {
-  id: string;
-};
-
-const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue,
-);
 
 const FormItem = React.forwardRef<
   HTMLDivElement,
@@ -106,7 +68,8 @@ const FormControl = React.forwardRef<
   React.ComponentRef<typeof Slot>,
   React.ComponentPropsWithoutRef<typeof Slot>
 >(({ ...props }, ref) => {
-  const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
+  const { error, formItemId, formDescriptionId, formMessageId } =
+    useFormField();
 
   return (
     <Slot
@@ -173,5 +136,6 @@ export {
   FormItem,
   FormLabel,
   FormMessage,
-  useFormField,
 };
+// `useFormField` intentionally lives in ./form-context so this file exports only
+// components (a React Fast Refresh requirement). Import it from there.

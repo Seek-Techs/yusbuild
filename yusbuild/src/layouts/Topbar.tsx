@@ -1,34 +1,127 @@
-import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Bell, LogOut, User as UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Logo } from "@/components/shared/Logo";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { Breadcrumbs } from "./Breadcrumbs";
+import { MobileNav } from "./MobileNav";
 
+/**
+ * Application topbar.
+ *
+ * Solid navy, per the client's design reference.
+ *
+ * Uses its own `--topbar` token rather than `--primary`: primary inverts to
+ * near-white in dark mode, which would turn the navy header into a pale band.
+ * The header is a fixed brand surface, so it stays navy in both schemes.
+ *
+ * Because it sits on a dark field regardless of scheme, every control inside
+ * needs explicit light-on-dark treatment — the default ghost button is styled
+ * for a light surface and its icon would all but disappear here.
+ *
+ * Sticky, which only works because the shell scrolls at the document level; a
+ * scroll container on the content pane silently defeats `position: sticky`.
+ */
 export function Topbar() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   }
 
-  return (
-    <header className="border-border flex items-center justify-between border-b bg-background px-4 py-4 shadow-sm sm:px-6 lg:px-8">
-      <Logo withText />
+  // Shared treatment for controls sitting on the navy field.
+  const onNavy =
+    "text-topbar-foreground/80 hover:bg-white/10 hover:text-topbar-foreground focus-visible:ring-white/50 focus-visible:ring-offset-topbar";
 
-      <div className="flex items-center gap-3">
-        <Badge variant="secondary" className="hidden sm:inline-flex">
-          {user?.roles[0] ?? "engineer"}
-        </Badge>
-        <div className="hidden rounded-md border border-input bg-secondary px-3 py-2 text-sm text-muted-foreground sm:block">
-          {user?.name ?? "User"}
+  return (
+    <header className="sticky top-0 z-40 h-topbar bg-topbar text-topbar-foreground">
+      <div className="flex h-full items-center gap-3 px-4 sm:px-6">
+        <MobileNav className={onNavy} />
+
+        <Logo withText onDark />
+
+        {/* Breadcrumbs render only for nested routes, and only where there is
+            room for them. */}
+        <Breadcrumbs className="hidden md:block" onDark />
+
+        <div className="ml-auto flex items-center gap-1">
+          {/* Notifications are on the roadmap. Rendered as a visible but inert
+              affordance rather than omitted, so the topbar matches the agreed
+              design without implying a feature that does not exist. */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-disabled="true"
+                onClick={(event) => event.preventDefault()}
+                aria-label="Notifications (coming soon)"
+                className={onNavy}
+              >
+                <Bell aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Notifications — coming soon</TooltipContent>
+          </Tooltip>
+
+          <ThemeToggle className={onNavy} />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`gap-2 ${onNavy}`}
+                aria-label="Account menu"
+              >
+                <UserIcon aria-hidden="true" />
+                <span className="hidden max-w-32 truncate sm:inline">
+                  {user?.username ?? "Account"}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <span className="block truncate text-body font-medium">
+                  {user?.username ?? "Signed in"}
+                </span>
+                {/* Role is shown only when genuinely known. The backend exposes
+                    no groups claim today, so asserting one here would state a
+                    permission level we cannot verify. */}
+                {user?.roles.length ? (
+                  <span className="block text-caption capitalize text-muted-foreground">
+                    {user.roles.join(", ")}
+                  </span>
+                ) : null}
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onSelect={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-          <LogOut /> Sign out
-        </Button>
       </div>
     </header>
   );
