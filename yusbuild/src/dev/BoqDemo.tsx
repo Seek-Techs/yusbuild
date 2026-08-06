@@ -167,7 +167,7 @@ export function BoqDemo() {
         eyebrow="Bill of quantities"
         title={`BOQ — ${project.name}`}
         description="Quantities derived from the current pile schedule."
-        backLink={{ to: "/projects", label: "Back to project" }}
+        backLink={{ to: "/_dev/project", label: "Back to project" }}
         actions={
           <Button variant="outline">
             <Download aria-hidden="true" /> Export CSV

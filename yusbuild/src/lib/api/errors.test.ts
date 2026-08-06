@@ -114,7 +114,9 @@ describe("normalizeApiError", () => {
       [409, "conflict"],
       [422, "validation"],
       [500, "server"],
-      [503, "server"],
+      [502, "network"],
+      [503, "network"],
+      [504, "network"],
     ])("maps %i to %s", (status, kind) => {
       expect(normalizeApiError(httpError(status)).kind).toBe(kind);
     });

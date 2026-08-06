@@ -112,6 +112,18 @@ const routes: RouteObject[] = [
     ),
     children: [{ path: "/login", element: <LoginPage /> }],
   },
+  // The gallery sits OUTSIDE ProtectedRoute. It renders fixtures and touches no
+  // API, so requiring a session would gate a backend-free demo behind a login
+  // that cannot succeed without a backend. It is still inside AppShell, so the
+  // screens are seen in the real chrome.
+  {
+    element: (
+      <RouterShell>
+        <AppShell />
+      </RouterShell>
+    ),
+    children: devRoutes,
+  },
   {
     element: (
       <RouterShell>
@@ -123,7 +135,6 @@ const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
-          ...devRoutes,
           ...NAV_ITEMS.map((item): RouteObject => ({
             path: item.to,
             element: <RoadmapPage title={item.label} />,

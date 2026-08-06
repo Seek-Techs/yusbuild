@@ -149,7 +149,9 @@ export function ProjectDetailDemo() {
         columns={COLUMNS}
         rows={paged}
         getRowId={(pile) => pile.id}
-        rowHref={(pile) => `/piles/${pile.id}`}
+        // No rowHref: a pile detail screen does not exist yet, and linking to
+        // the gated /piles route would bounce a gallery visitor to a sign-in
+        // page. Demonstrating a dead link is worse than omitting it.
         caption={`Piles in ${project.name}`}
         sorting={{
           ordering: params.ordering,
@@ -171,7 +173,7 @@ export function ProjectDetailDemo() {
         title={project.name}
         description={project.description}
         badge={<StatusBadge status={project.status} map={PROJECT_STATUS} />}
-        backLink={{ to: "/projects", label: "Back to projects" }}
+        backLink={{ to: "/_dev/dashboard", label: "Back to dashboard" }}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">

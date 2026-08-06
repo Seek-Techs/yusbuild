@@ -71,6 +71,11 @@ function kindFromStatus(status: number | undefined): ErrorKind {
   if (status === 403) return "forbidden";
   if (status === 404 || status === 410) return "notFound";
   if (status === 409) return "conflict";
+  // Gateway failures mean the request never reached the application: a proxy
+  // with no upstream, or a backend that is down. That is a connectivity
+  // problem, not an application fault, so it reads as "network" — the same
+  // thing a user experiences when the server is simply not there.
+  if (status === 502 || status === 503 || status === 504) return "network";
   if (status >= 500) return "server";
   return "unknown";
 }
