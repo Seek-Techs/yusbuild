@@ -62,7 +62,7 @@ export function DashboardDemo() {
 
       <ChartCard
         title="Steel (Tons) by Project"
-        action={{ to: "/projects", label: "View all" }}
+        action={{ to: "/_dev/project", label: "View all" }}
         // A chart is invisible to assistive technology; this is its text
         // equivalent, not a decoration.
         summary={`Steel tonnage by project: ${STEEL_BY_PROJECT.map(

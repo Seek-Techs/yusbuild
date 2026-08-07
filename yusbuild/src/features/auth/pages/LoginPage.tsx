@@ -19,6 +19,7 @@ import { InlineLoader } from "@/components/shared/Loaders";
 import { Logo } from "@/components/shared/Logo";
 import { Footer } from "@/layouts/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizeApiError } from "@/lib/api/errors";
 import { loginSchema, type LoginValues } from "../schemas/login";
 
 /**
@@ -53,12 +54,39 @@ export function LoginPage() {
     try {
       await login(values.username, values.password);
       navigate(from, { replace: true });
-    } catch {
-      // The backend returns 401 with no field attribution, so this is a
-      // form-level error rather than one bound to username or password.
-      setFormError(
-        "We could not sign you in. Check your username and password, then try again.",
-      );
+    } catch (error) {
+      // Distinguish "your credentials are wrong" from "there is no server".
+      // An earlier version blamed the credentials for every failure, which sent
+      // people hunting for a password when the real problem was an unreachable
+      // or unconfigured backend.
+      const normalized = normalizeApiError(error);
+
+      switch (normalized.kind) {
+        case "unauthorized":
+        case "validation":
+          // The backend returns 401 with no field attribution, so this is a
+          // form-level error rather than one bound to username or password.
+          setFormError(
+            "We could not sign you in. Check your username and password, then try again.",
+          );
+          break;
+        case "network":
+        case "notFound":
+          setFormError(
+            "Cannot reach the YusBuild server. It may not be running, or the app may not be configured with an API address.",
+          );
+          break;
+        case "forbidden":
+          setFormError(
+            "This account does not have access to YusBuild. Contact your project administrator.",
+          );
+          break;
+        default:
+          setFormError(
+            normalized.message ||
+              "Something went wrong while signing in. Please try again.",
+          );
+      }
     }
   }
 

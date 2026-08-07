@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Bell, LogIn, LogOut, User as UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +38,7 @@ import { MobileNav } from "./MobileNav";
  * scroll container on the content pane silently defeats `position: sticky`.
  */
 export function Topbar() {
-  const { logout, user } = useAuth();
+  const { logout, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -101,7 +101,7 @@ export function Topbar() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <span className="block truncate text-body font-medium">
-                  {user?.username ?? "Signed in"}
+                  {user?.username ?? "Not signed in"}
                 </span>
                 {/* Role is shown only when genuinely known. The backend exposes
                     no groups claim today, so asserting one here would state a
@@ -115,10 +115,20 @@ export function Topbar() {
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onSelect={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
-                Sign out
-              </DropdownMenuItem>
+              {/* The shell also renders on the public gallery routes, where
+                  there is no session. Offering "Sign out" there would be
+                  meaningless, so the action follows the actual state. */}
+              {isAuthenticated ? (
+                <DropdownMenuItem onSelect={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Sign out
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onSelect={() => navigate("/login")}>
+                  <LogIn className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Sign in
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

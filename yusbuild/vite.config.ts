@@ -21,10 +21,19 @@ import path from "path";
 export default defineConfig(({ command, mode }) => {
   const isProductionBuild = command === "build" && mode !== "development";
 
+  // The component gallery normally ships only in development. Setting
+  // VITE_ENABLE_GALLERY=1 includes it in a production build too, so the client
+  // design reference can be demonstrated on a deployed URL without a backend.
+  // Opt-in rather than opt-out: a real production deploy that forgets to unset
+  // a flag should ship *less*, not more.
+  const enableGallery = process.env.VITE_ENABLE_GALLERY === "1";
+
   return {
     plugins: [react()],
     resolve: {
       alias: [
+        // The prototype is always stubbed in production — it is frozen
+        // reference material and is never demonstrated.
         ...(isProductionBuild
           ? [
               {
@@ -34,6 +43,10 @@ export default defineConfig(({ command, mode }) => {
                   "./src/_prototype/routes.stub.tsx",
                 ),
               },
+            ]
+          : []),
+        ...(isProductionBuild && !enableGallery
+          ? [
               {
                 find: /^@\/dev\/routes$/,
                 replacement: path.resolve(

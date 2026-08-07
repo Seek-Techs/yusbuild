@@ -11,8 +11,10 @@ export function GalleryFrame() {
         <p className="text-body font-medium">Component gallery</p>
         <p className="text-caption text-muted-foreground">
           The client design reference, built only from{" "}
-          <code className="rounded bg-muted px-1">@/components/shared</code>.
-          Not part of the application, and excluded from production builds.
+          <code className="rounded bg-muted px-1">@/components/shared</code> and
+          rendered from fixtures — no backend, and no sign-in required. These
+          are not application screens; the modules in the sidebar are still on
+          the roadmap.
         </p>
 
         <nav aria-label="Gallery screens" className="mt-3 flex flex-wrap gap-2">
