@@ -29,6 +29,11 @@ ALLOWED_HOSTS = [
     for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://yusbuild-mhdq7duh9-ceay-tech.vercel.app",
+]
+
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -60,6 +65,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "apps.common.middleware.RequestIDMiddleware",
