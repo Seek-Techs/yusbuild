@@ -31,7 +31,12 @@ ALLOWED_HOSTS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    "https://yusbuild.vercel.app",
     "https://yusbuild-mhdq7duh9-ceay-tech.vercel.app",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://yusbuild.vercel.app",
 ]
 
 # Application definition
