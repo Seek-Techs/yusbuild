@@ -6,6 +6,7 @@ Tests all CRUD operations and custom actions.
 import json
 
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework import status
@@ -52,6 +53,23 @@ def project(db, authenticated_user):
         role=ProjectMembership.ROLE_ENGINEER,
     )
     return project
+
+
+class TestCorsConfiguration:
+    """Local Vite dev requests must be explicitly allowed."""
+
+    def test_local_frontend_origins_are_allowed(self):
+        client = APIClient()
+        response = client.options(
+            "/api/auth/token/",
+            HTTP_ORIGIN="http://localhost:5173",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="content-type",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Access-Control-Allow-Origin"] == "http://localhost:5173"
+        assert "http://127.0.0.1:5173" in settings.CORS_ALLOWED_ORIGINS
 
 
 class TestHealthEndpoint:
