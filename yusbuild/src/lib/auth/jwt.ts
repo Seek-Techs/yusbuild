@@ -8,7 +8,13 @@
  */
 
 export type JwtPayload = {
-  user_id?: number;
+  /**
+   * SimpleJWT's user id claim. Deliberately typed as both: it is a number for
+   * an integer primary key but a string when the id is serialised (a UUID pk,
+   * or newer versions that stringify it). Assuming one of the two rejects
+   * valid tokens.
+   */
+  user_id?: number | string;
   token_type?: string;
   exp?: number;
   [key: string]: unknown;
