@@ -29,6 +29,20 @@ ALLOWED_HOSTS = [
     for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
+
+# Local Vite dev requests should be able to call the API from the browser
+# while production deployments stay locked to the approved frontend origins.
+CORS_ALLOWED_ORIGINS = [
+    "https://yusbuild.vercel.app",
+    "https://yusbuild-mhdq7duh9-ceay-tech.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://yusbuild.vercel.app",
+]
+
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -60,6 +74,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "apps.common.middleware.RequestIDMiddleware",
