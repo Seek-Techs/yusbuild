@@ -90,6 +90,31 @@ describe("AuthProvider", () => {
     expect(screen.queryByText("Login page")).not.toBeInTheDocument();
   });
 
+  it("accepts a string user_id as well as a number", () => {
+    // Regression guard. SimpleJWT's user_id claim is not reliably a number —
+    // it arrives as the string "1" from the deployed backend. Requiring a
+    // number rejected a valid token, so login threw and the UI reported the
+    // server as unreachable while the request had actually returned 200.
+    window.localStorage.setItem(
+      ACCESS_TOKEN_KEY,
+      makeTestJwt({ user_id: "7" }),
+    );
+    window.localStorage.setItem(
+      REFRESH_TOKEN_KEY,
+      makeTestJwt({ token_type: "refresh" }),
+    );
+    window.localStorage.setItem("yusbuild_username", "admin");
+
+    renderWithProviders(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByTestId("authed")).toHaveTextContent("true");
+    expect(screen.getByTestId("userid")).toHaveTextContent("7");
+  });
+
   it("discards a stored token it cannot decode", () => {
     window.localStorage.setItem(ACCESS_TOKEN_KEY, "not-a-jwt");
     window.localStorage.setItem(REFRESH_TOKEN_KEY, "not-a-jwt");

@@ -26,15 +26,29 @@ import type { AuthContextType, User } from "@/types/auth";
  *
  * `user_id` is the only identifying claim the backend issues. Roles default to
  * empty, which makes RoleGate fail closed — see the TODO on `User.roles`.
+ *
+ * The claim's JSON type is NOT stable: SimpleJWT emits a number for an integer
+ * primary key but a string when the id is serialised (a UUID pk, or newer
+ * versions that stringify it). An earlier version required a number, so a
+ * perfectly good token was rejected, login threw, and the UI reported the
+ * server as unreachable — a real sign-in failure with a misleading message.
+ * Accept both and normalise.
  */
 function userFromToken(accessToken: string, username: string): User | null {
   const payload = decodeJwt(accessToken);
-  if (!payload || typeof payload.user_id !== "number") {
+  const rawId = payload?.user_id;
+
+  if (rawId === undefined || rawId === null) {
+    return null;
+  }
+
+  const id = typeof rawId === "number" ? rawId : Number(rawId);
+  if (!Number.isFinite(id)) {
     return null;
   }
 
   return {
-    id: payload.user_id,
+    id,
     username,
     roles: [],
   };
