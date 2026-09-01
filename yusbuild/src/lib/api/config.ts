@@ -7,9 +7,7 @@
  */
 const DEFAULT_API_BASE_URL = "/api";
 
-export const normalizeApiBaseUrl = (
-  rawBaseUrl: string | undefined,
-): string => {
+export const normalizeApiBaseUrl = (rawBaseUrl: string | undefined): string => {
   const baseUrl = rawBaseUrl?.trim() || DEFAULT_API_BASE_URL;
 
   if (baseUrl.startsWith("VITE_API_URL=")) {
